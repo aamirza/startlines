@@ -11,5 +11,6 @@ public class StartlineCheckerReceiver extends BroadcastReceiver {
 
         MainActivity mainActivity = new MainActivity();
         mainActivity.executeStartline(lineType);
+        mainActivity.scheduleStartline();
     }
 }

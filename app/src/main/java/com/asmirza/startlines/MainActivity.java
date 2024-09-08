@@ -5,16 +5,21 @@ import androidx.core.content.ContextCompat;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
     @Override
@@ -25,11 +30,20 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MainActivity", "Before starting Starline Service");
         // resetting if there's an error
         //saveStatuses("0", "0", "", false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                startActivity(intent);
+            }
+        }
+
         Intent serviceIntent = new Intent(this, StartlineService.class);
         ContextCompat.startForegroundService(this, serviceIntent);
         loadStatuses();
         addTextChangeListener();
         funModeSwitchListener();
+        scheduleStartline();
     }
 
     private void funModeSwitchListener() {
@@ -132,6 +146,48 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void scheduleStartline() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent intent = new Intent(this, StartlineCheckerReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        Calendar calendar = Calendar.getInstance();
+        int currentMinute = calendar.get(Calendar.MINUTE);
+
+        String lineType;
+        int startlineMinute;
+        if (currentMinute < 14) {
+            lineType = "startline";
+            startlineMinute = 14;
+        } else if (currentMinute < 29) {
+            lineType = "startline";
+            startlineMinute = 29;
+        } else if (currentMinute < 30) {
+            lineType = "funline";
+            startlineMinute = 30;
+        }
+        else if (currentMinute < 44) {
+            lineType = "startline";
+            startlineMinute = 44;
+        } else if (currentMinute < 59) {
+            lineType = "startline";
+            startlineMinute = 59;
+        } else {
+            lineType = "funline";
+            calendar.add(Calendar.HOUR_OF_DAY, 1);
+            startlineMinute = 0;
+        }
+
+        calendar.set(Calendar.MINUTE, startlineMinute);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        long triggerAtMillis = calendar.getTimeInMillis();
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+
+        Log.d("Scheduler", "Next alarm set for " + lineType + " at " + calendar.getTime().toString());
+    }
+
     public void startTimebox() {
         /* For starting the 2 minute staircase timeboxes when the start button is pressed */
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
@@ -194,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void scheduleStartlineChecker(int intervalInMinutes, String lineType) {
-        /* Schedules the Startline Manager to run every 5 seconds */
+        /* Schedules the Startline Manager to run after a certain amount of minutes */
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent intent = new Intent(this, StartlineCheckerReceiver.class);
         intent.putExtra("lineType", lineType);
