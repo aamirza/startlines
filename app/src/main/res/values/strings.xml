@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Startlines</string>
+    <string name="startlines_name">Startline</string>
+    <string name="funlines_name">Funline</string>
+    <string name="start_button_text">Start</string>
+    <string name="stop_button_text">Stop</string>
+    <string name="set_time_limit_text">Set Time Limit</string>
+    <string name="task_name_edit_text_hint">Enter task name</string>
+    <string name="fun_mode_switch_text">Fun Mode</string>
+    <string name="music_mode_switch_text">Music Mode</string>
+</resources>
