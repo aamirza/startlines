@@ -20,6 +20,11 @@ public class StartlineService extends Service {
         startForeground(1, getNotification());
         Log.d("StartlineService", "Startline foreground service started");
 
+        String lineType = intent.getStringExtra("lineType");
+        Log.d("StartlineService", "StartlineService entered with lineType: " + lineType);
+
+
+
         //scheduleChecker(15);
         return START_STICKY;
     }

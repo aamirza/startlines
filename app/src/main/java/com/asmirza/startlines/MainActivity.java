@@ -28,8 +28,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.d("MainActivity", "Before starting Starline Service");
-        // resetting if there's an error
-        //saveStatuses("0", "0", "", false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             if (!alarmManager.canScheduleExactAlarms()) {
@@ -44,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         addTextChangeListener();
         funModeSwitchListener();
         scheduleStartline();
+        //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
 
     private void funModeSwitchListener() {
@@ -68,6 +67,24 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         Log.d("ApplifeCycle", "App is resumed, back in foreground");
         super.onResume();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        /* This will execute when the StartlineCheckerReceiver sends an intent to this activity */
+
+
+        super.onNewIntent(intent);
+        setIntent(intent); // Important: update the activity's intent
+        Log.d("MainActivity", "onNewIntent called with intent: " + intent.getStringExtra("lineType"));
+
+        String lineType = intent.getStringExtra("lineType");
+
+        if (lineType != null) {
+            Log.d("onNewIntent", "executing lineType: " + lineType);
+            executeStartline(lineType);
+            scheduleStartline();
+        }
     }
 
     public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode) {
@@ -148,8 +165,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void scheduleStartline() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent intent = new Intent(this, StartlineCheckerReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         Calendar calendar = Calendar.getInstance();
         int currentMinute = calendar.get(Calendar.MINUTE);
@@ -177,6 +192,11 @@ public class MainActivity extends AppCompatActivity {
             calendar.add(Calendar.HOUR_OF_DAY, 1);
             startlineMinute = 0;
         }
+
+        Intent intent = new Intent(this, StartlineCheckerReceiver.class);
+        intent.putExtra("lineType", lineType);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent,  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
 
         calendar.set(Calendar.MINUTE, startlineMinute);
         calendar.set(Calendar.SECOND, 0);
@@ -254,12 +274,13 @@ public class MainActivity extends AppCompatActivity {
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent intent = new Intent(this, StartlineCheckerReceiver.class);
         intent.putExtra("lineType", lineType);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         long interval = (long) intervalInMinutes * 60 * 1000;  // in milliseconds
         long triggerAtMillis = System.currentTimeMillis() + interval;
 
         // TODO: You may need to make this setExactAndAllowWhileIdle if this is not reliable
-        alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+        Log.d("Scheduler", "Startline Checker scheduled for " + lineType + " in " + intervalInMinutes + " minutes");
     }
 }
