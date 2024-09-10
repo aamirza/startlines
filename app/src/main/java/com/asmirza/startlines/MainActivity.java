@@ -15,13 +15,16 @@ import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
@@ -48,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         loadStatuses();
         addTextChangeListener();
         funModeSwitchListener();
+        setupStartButton();
         scheduleStartlines();
         scheduleMidnightAlarm();
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
@@ -61,6 +65,16 @@ public class MainActivity extends AppCompatActivity {
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean("funMode", isChecked);
             editor.apply();
+        });
+    }
+
+    private void setupStartButton() {
+        Button startButton = findViewById(R.id.start_button);
+        Log.d("MainActivity", "Setting up start button");
+
+        startButton.setOnClickListener(v -> {
+            Log.d("MainActivity", "Start button pressed");
+            startTimebox();
         });
     }
 
@@ -182,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
         int funlineInterval = 30;  // Funline is every 30 minutes
 
         int hoursInADay = 24;
-        for (int i = Calendar.HOUR_OF_DAY; i < hoursInADay; i++) {
+        for (int i = 0; i < hoursInADay; i++) {
             for (int minute : startlineMinutes) {
                 calendar.set(Calendar.HOUR_OF_DAY, i);
                 calendar.set(Calendar.MINUTE, minute);
@@ -240,31 +254,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startTimebox() {
+        startTimebox(2);
+    }
+
+    public void startTimebox(int currentTimeboxDuration) {
         /* For starting the 2 minute staircase timeboxes when the start button is pressed */
-        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
 
-        int twoMinutes = 2 * 60 * 1000;  // in milliseconds
-        long currentTime = System.currentTimeMillis();
-        int currentTimeboxDuration = prefs.getInt("timeboxDuration", twoMinutes);
+        int timeboxDurationInMillis = currentTimeboxDuration * 60 * 1000;
+        long currentTimeInMillis = System.currentTimeMillis();
+        long endTimeInMillis = currentTimeInMillis + timeboxDurationInMillis;
 
-        long endTime = currentTime + currentTimeboxDuration;
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        String endTimeFormatted = sdf.format(endTimeInMillis);
 
-        editor.putLong("endTime", endTime);
-        editor.apply();
-
+        setTimeboxStatusText(currentTimeboxDuration + " (" + endTimeFormatted + ")");
+        Log.d("Timebox", "Timebox started for " + currentTimeboxDuration + " minutes, ending at " + endTimeFormatted);
         // Set Startlines to "1" after timebox completion and start the new timebox
         new Handler().postDelayed(() -> {
-            if (isFunModeOn()) {
-                setFunlineStatus("1");
-            } else {
-                setStartlineStatus("1");
-            }
-            int nextTimeboxDuration = currentTimeboxDuration + twoMinutes;
-            editor.putInt("timeboxDuration", nextTimeboxDuration);
-            editor.apply();
-            startTimebox(); // Start the next timebox automatically
-        }, currentTimeboxDuration);
+            timeboxComplete();
+            int nextTimeboxDuration = currentTimeboxDuration + 2;
+            setTimeboxStatusText(currentTimeboxDuration + "(" + endTimeInMillis + ")");
+            startTimebox(nextTimeboxDuration); // Start the next timebox automatically
+        }, timeboxDurationInMillis);
     }
 
     private void setStartlineStatus(String i) {
@@ -284,6 +295,22 @@ public class MainActivity extends AppCompatActivity {
             setStartlineStatus(status);
         } else if (lineType.equals("funline")) {
             setFunlineStatus(status);
+        }
+    }
+
+    private void setTimeboxStatusText(String text) {
+        TextView currentTimeboxTextView = findViewById(R.id.current_timebox);
+        currentTimeboxTextView.setText(text);
+    }
+
+    private void timeboxComplete() {
+        /* Called when the timebox is complete */
+        if (isFunModeOn()) {
+            setFunlineStatus("1");
+            Log.d("MainActivity", "Funline set to 1 after timebox completion");
+        } else {
+            setStartlineStatus("1");
+            Log.d("MainActivity", "Startline set to 1 after timebox completion");
         }
     }
 
