@@ -9,7 +9,8 @@ public class StartlineCheckerReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String lineType = intent.getStringExtra("lineType");
-        Log.d("StartlineCheckerReceiver", "StartlineCheckerReceiver entered with lineType: " + lineType);
+        String requestCode = String.valueOf(intent.getIntExtra("requestCode", -1));
+        Log.d("StartlineCheckerReceiver", "StartlineCheckerReceiver entered with lineType and request code: " + lineType + " " + requestCode);
         Intent mainActivityIntent = new Intent(context, MainActivity.class);
         mainActivityIntent.putExtra("lineType", lineType);
         mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

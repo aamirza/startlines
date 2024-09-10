@@ -19,9 +19,15 @@ import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
+    private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
+    private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d("ApplifeCycle", "inside onCreate");
@@ -41,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         loadStatuses();
         addTextChangeListener();
         funModeSwitchListener();
-        scheduleStartline();
+        scheduleStartlines();
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
 
@@ -83,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
         if (lineType != null) {
             Log.d("onNewIntent", "executing lineType: " + lineType);
             executeStartline(lineType);
-            scheduleStartline();
         }
     }
 
@@ -163,49 +168,49 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void scheduleStartline() {
+    public void scheduleStartlines() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         Calendar calendar = Calendar.getInstance();
-        int currentMinute = calendar.get(Calendar.MINUTE);
+        int[] startlineMinutes = {0, 14, 29, 30, 44, 59};
+        int funlineInterval = 30;  // Funline is every 30 minutes
 
-        String lineType;
-        int startlineMinute;
-        if (currentMinute < 14) {
-            lineType = "startline";
-            startlineMinute = 14;
-        } else if (currentMinute < 29) {
-            lineType = "startline";
-            startlineMinute = 29;
-        } else if (currentMinute < 30) {
-            lineType = "funline";
-            startlineMinute = 30;
+        int hoursInADay = 24;
+        for (int i = Calendar.HOUR_OF_DAY; i < hoursInADay; i++) {
+            for (int minute : startlineMinutes) {
+                calendar.set(Calendar.HOUR_OF_DAY, i);
+                calendar.set(Calendar.MINUTE, minute);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+
+                long alarmTimeInMillis = calendar.getTimeInMillis();
+
+                if (alarmTimeInMillis < System.currentTimeMillis()) {
+                    Log.d("Scheduler", "Alarm time is in the past, skipping: " + calendar.getTime().toString());
+                    continue;
+                }
+
+                String lineType;
+                if (minute % funlineInterval == 0) {  // if it is divisible by 30 (funlineInterval)
+                    lineType = "funline";
+                } else {
+                    lineType = "startline";
+                }
+
+                Intent intent = new Intent(this, StartlineCheckerReceiver.class);
+                int requestCode = Integer.parseInt(String.valueOf(i*60 + minute));
+                intent.putExtra("lineType", lineType);
+                intent.putExtra("requestCode", requestCode);
+                // create a time using i and minute then convert to int
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+                alarmPendingIntents.add(pendingIntent);
+                Log.d("Scheduler", "Next alarm set for " + lineType + " at " + calendar.getTime().toString());
+            }
         }
-        else if (currentMinute < 44) {
-            lineType = "startline";
-            startlineMinute = 44;
-        } else if (currentMinute < 59) {
-            lineType = "startline";
-            startlineMinute = 59;
-        } else {
-            lineType = "funline";
-            calendar.add(Calendar.HOUR_OF_DAY, 1);
-            startlineMinute = 0;
-        }
 
-        Intent intent = new Intent(this, StartlineCheckerReceiver.class);
-        intent.putExtra("lineType", lineType);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent,  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-
-        calendar.set(Calendar.MINUTE, startlineMinute);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-
-        long triggerAtMillis = calendar.getTimeInMillis();
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
-
-        Log.d("Scheduler", "Next alarm set for " + lineType + " at " + calendar.getTime().toString());
+        Log.d("Scheduler", "All alarms for the day set");
     }
 
     public void startTimebox() {
@@ -273,13 +278,15 @@ public class MainActivity extends AppCompatActivity {
         /* Schedules the Startline Manager to run after a certain amount of minutes */
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent intent = new Intent(this, StartlineCheckerReceiver.class);
+        int requestCode = lineType.equals("startline") ? STARTLINE_ALARM_REQUEST_CODE : FUNLINE_ALARM_REQUEST_CODE;
         intent.putExtra("lineType", lineType);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        intent.putExtra("requestCode", requestCode);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         long interval = (long) intervalInMinutes * 60 * 1000;  // in milliseconds
         long triggerAtMillis = System.currentTimeMillis() + interval;
 
-        // TODO: You may need to make this setExactAndAllowWhileIdle if this is not reliable
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
         Log.d("Scheduler", "Startline Checker scheduled for " + lineType + " in " + intervalInMinutes + " minutes");
     }
