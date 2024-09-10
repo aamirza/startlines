@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
     private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
+    private static final int MIDNIGHT_ALARM_REQUEST_CODE = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         addTextChangeListener();
         funModeSwitchListener();
         scheduleStartlines();
+        scheduleMidnightAlarm();
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
 
@@ -87,8 +89,12 @@ public class MainActivity extends AppCompatActivity {
         String lineType = intent.getStringExtra("lineType");
 
         if (lineType != null) {
-            Log.d("onNewIntent", "executing lineType: " + lineType);
-            executeStartline(lineType);
+            if (lineType.equals("midnight")) {
+                scheduleStartlines();
+            } else {
+                Log.d("onNewIntent", "executing lineType: " + lineType);
+                executeStartline(lineType);
+            }
         }
     }
 
@@ -211,6 +217,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Log.d("Scheduler", "All alarms for the day set");
+    }
+
+    private void scheduleMidnightAlarm() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent intent = new Intent(this, StartlineCheckerReceiver.class);
+        intent.putExtra("lineType", "midnight");
+        intent.putExtra("requestCode", MIDNIGHT_ALARM_REQUEST_CODE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, MIDNIGHT_ALARM_REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+
+        long alarmTimeInMillis = calendar.getTimeInMillis();
+
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, alarmTimeInMillis, AlarmManager.INTERVAL_DAY, pendingIntent);
+        Log.d("Scheduler", "Midnight alarm set for " + calendar.getTime().toString() + " and set to repeat after that");
     }
 
     public void startTimebox() {
