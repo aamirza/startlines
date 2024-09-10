@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
+    private Handler handler = new Handler();   // will be used to create and cancel timeboxes
+    private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
     private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
@@ -52,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         addTextChangeListener();
         funModeSwitchListener();
         setupStartButton();
+        setupStopButton();
         scheduleStartlines();
         scheduleMidnightAlarm();
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
@@ -75,6 +78,16 @@ public class MainActivity extends AppCompatActivity {
         startButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Start button pressed");
             startTimebox();
+        });
+    }
+
+    private void setupStopButton() {
+        Button stopButton = findViewById(R.id.stop_button);
+        Log.d("MainActivity", "Setting up stop button");
+
+        stopButton.setOnClickListener(v -> {
+            Log.d("MainActivity", "Stop button pressed");
+            stopTimebox();
         });
     }
 
@@ -270,12 +283,23 @@ public class MainActivity extends AppCompatActivity {
         setTimeboxStatusText(currentTimeboxDuration + " (" + endTimeFormatted + ")");
         Log.d("Timebox", "Timebox started for " + currentTimeboxDuration + " minutes, ending at " + endTimeFormatted);
         // Set Startlines to "1" after timebox completion and start the new timebox
-        new Handler().postDelayed(() -> {
+
+        timeboxRunnable = () -> {
             timeboxComplete();
             int nextTimeboxDuration = currentTimeboxDuration + 2;
-            setTimeboxStatusText(currentTimeboxDuration + "(" + endTimeInMillis + ")");
-            startTimebox(nextTimeboxDuration); // Start the next timebox automatically
-        }, timeboxDurationInMillis);
+            startTimebox(nextTimeboxDuration);
+        };
+
+        handler.postDelayed(timeboxRunnable, timeboxDurationInMillis);
+    }
+
+    public void stopTimebox() {
+        /* For stopping the timebox when the stop button is pressed */
+        if (timeboxRunnable != null) {
+            handler.removeCallbacks(timeboxRunnable);
+            setTimeboxStatusText("0");
+            Log.d("Timebox", "Timebox stopped");
+        }
     }
 
     private void setStartlineStatus(String i) {
