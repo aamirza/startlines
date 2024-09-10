@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private long timeLimitInMillis = Long.MAX_VALUE;  // used when setting a time limit
+    private MediaPlayer tickingMediaPlayer;  // will be used for playing the ticking sound
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
     private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
@@ -297,6 +299,11 @@ public class MainActivity extends AppCompatActivity {
 
         String endTimeFormatted = timestampToText(endTimeInMillis);
 
+        if (timeLimitInMillis == Long.MAX_VALUE) {
+            // If there is no time limit set, play the ticking sound
+            playTickingSound();
+        }
+
         setTimeboxStatusText(currentTimeboxDuration + " (" + endTimeFormatted + ")");
         Log.d("Timebox", "Timebox started for " + currentTimeboxDuration + " minutes, ending at " + endTimeFormatted);
         // Set Startlines to "1" after timebox completion and start the new timebox
@@ -321,6 +328,7 @@ public class MainActivity extends AppCompatActivity {
             handler.removeCallbacks(timeboxRunnable);
             setTimeboxStatusText("0");
             resetWorkingUntilTime();
+            stopTickingSound();
 
             Log.d("Timebox", "Timebox stopped");
         }
@@ -342,6 +350,7 @@ public class MainActivity extends AppCompatActivity {
                 timeLimitInMillis = timestampMinutesFromNow(minutes);
                 String endTimeText = timestampToText(timeLimitInMillis);
                 setWorkingUntilText(endTimeText);
+                stopTickingSound();
                 Log.d("Timebox", "Time limit set for " + minutes + " minutes");
             } else {
                 resetWorkingUntilTime();
@@ -435,6 +444,23 @@ public class MainActivity extends AppCompatActivity {
 
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
         Log.d("Scheduler", "Startline Checker scheduled for " + lineType + " in " + intervalInMinutes + " minutes");
+    }
+
+    private void playTickingSound() {
+        if (tickingMediaPlayer == null) {
+            tickingMediaPlayer = MediaPlayer.create(this, R.raw.clock_tick);
+            tickingMediaPlayer.setLooping(true);
+        }
+        tickingMediaPlayer.start();
+    }
+
+    private void stopTickingSound() {
+        if (tickingMediaPlayer != null) {
+            tickingMediaPlayer.stop();
+            tickingMediaPlayer.reset();  // Reset the media player
+            tickingMediaPlayer.release();
+            tickingMediaPlayer = null;
+        }
     }
 
     private static String timestampToText(long timestamp) {
