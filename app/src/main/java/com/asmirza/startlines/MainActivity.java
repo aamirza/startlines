@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.Button;
@@ -29,6 +31,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
+    private long timeLimitInMillis = Long.MAX_VALUE;  // used when setting a time limit
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
     private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         funModeSwitchListener();
         setupStartButton();
         setupStopButton();
+        setupSetTimeLimitButton();
         scheduleStartlines();
         scheduleMidnightAlarm();
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
@@ -88,6 +92,16 @@ public class MainActivity extends AppCompatActivity {
         stopButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Stop button pressed");
             stopTimebox();
+        });
+    }
+
+    private void setupSetTimeLimitButton() {
+        Button setTimeLimitButton = findViewById(R.id.time_limit_button);
+        Log.d("MainActivity", "Setting up set time limit button");
+
+        setTimeLimitButton.setOnClickListener(v -> {
+            Log.d("MainActivity", "Set time limit button pressed");
+            showSetTimeLimitDialog();
         });
     }
 
@@ -184,6 +198,10 @@ public class MainActivity extends AppCompatActivity {
         return prefs.getBoolean("funMode", false);
     }
 
+    public boolean isTimeLimitPassed() {
+        return System.currentTimeMillis() >= timeLimitInMillis;
+    }
+
 
     public void addTextChangeListener() {
         EditText taskNameEditText = findViewById(R.id.task_name);
@@ -274,11 +292,10 @@ public class MainActivity extends AppCompatActivity {
         /* For starting the 2 minute staircase timeboxes when the start button is pressed */
 
         int timeboxDurationInMillis = currentTimeboxDuration * 60 * 1000;
-        long currentTimeInMillis = System.currentTimeMillis();
-        long endTimeInMillis = currentTimeInMillis + timeboxDurationInMillis;
+        long endTimeInMillis = timestampMinutesFromNow(currentTimeboxDuration);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        String endTimeFormatted = sdf.format(endTimeInMillis);
+
+        String endTimeFormatted = timestampToText(endTimeInMillis);
 
         setTimeboxStatusText(currentTimeboxDuration + " (" + endTimeFormatted + ")");
         Log.d("Timebox", "Timebox started for " + currentTimeboxDuration + " minutes, ending at " + endTimeFormatted);
@@ -286,6 +303,11 @@ public class MainActivity extends AppCompatActivity {
 
         timeboxRunnable = () -> {
             timeboxComplete();
+            if (isTimeLimitPassed()) {
+                Log.d("Timebox", "Time limit reached, stopping timebox");
+                stopTimebox();
+                return;
+            }
             int nextTimeboxDuration = currentTimeboxDuration + 2;
             startTimebox(nextTimeboxDuration);
         };
@@ -298,8 +320,37 @@ public class MainActivity extends AppCompatActivity {
         if (timeboxRunnable != null) {
             handler.removeCallbacks(timeboxRunnable);
             setTimeboxStatusText("0");
+            resetWorkingUntilTime();
+
             Log.d("Timebox", "Timebox stopped");
         }
+    }
+
+    private void showSetTimeLimitDialog() {
+        /* Allow users to set a time limit for their timebox using a dialog box */
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Set Time Limit");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            String inputText = input.getText().toString();
+            if (!inputText.isEmpty()) {
+                int minutes = Integer.parseInt(inputText);
+                timeLimitInMillis = timestampMinutesFromNow(minutes);
+                String endTimeText = timestampToText(timeLimitInMillis);
+                setWorkingUntilText(endTimeText);
+                Log.d("Timebox", "Time limit set for " + minutes + " minutes");
+            } else {
+                resetWorkingUntilTime();
+                Log.d("Timebox", "Time limit cleared");
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 
     private void setStartlineStatus(String i) {
@@ -325,6 +376,24 @@ public class MainActivity extends AppCompatActivity {
     private void setTimeboxStatusText(String text) {
         TextView currentTimeboxTextView = findViewById(R.id.current_timebox);
         currentTimeboxTextView.setText(text);
+    }
+
+    private void setWorkingUntilText(String timeText) {
+        TextView workingUntilTextView = findViewById(R.id.working_until_text);
+        Log.d("MainActivity", "Setting working until text to: " + timeText);
+        if (!timeText.isEmpty()) {
+            String formattedText = getString(R.string.working_until_text, timeText);
+            workingUntilTextView.setText(formattedText);
+            Log.d("MainActivity", "Working until text set to: " + formattedText);
+        } else {
+            workingUntilTextView.setText("");
+            Log.d("MainActivity", "Working until text cleared");
+        }
+    }
+
+    private void resetWorkingUntilTime() {
+        setWorkingUntilText("");
+        timeLimitInMillis = Long.MAX_VALUE;
     }
 
     private void timeboxComplete() {
@@ -366,5 +435,16 @@ public class MainActivity extends AppCompatActivity {
 
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
         Log.d("Scheduler", "Startline Checker scheduled for " + lineType + " in " + intervalInMinutes + " minutes");
+    }
+
+    private static String timestampToText(long timestamp) {
+        /* Converts a timestamp to a human-readable HH:mm format */
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        return sdf.format(timestamp);
+    }
+
+    private static long timestampMinutesFromNow(int minutes) {
+        /* Returns a timestamp for a certain amount of minutes from the current time */
+        return System.currentTimeMillis() + ((long) minutes * 60 * 1000);
     }
 }

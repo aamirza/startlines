@@ -8,4 +8,5 @@
     <string name="task_name_edit_text_hint">Enter task name</string>
     <string name="fun_mode_switch_text">Fun Mode</string>
     <string name="music_mode_switch_text">Music Mode</string>
+    <string name="working_until_text">Working until %1$s</string>
 </resources>
