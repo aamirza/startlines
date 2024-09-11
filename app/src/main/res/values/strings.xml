@@ -10,4 +10,6 @@
     <string name="music_mode_switch_text">Music Mode</string>
     <string name="working_until_text">Working until %1$s</string>
     <string name="manage_blocked_apps_button_text">Manage Blocked Apps</string>
+    <string name="save_changes_button_text">Save</string>
+    <string name="app_icon_description">App Icon</string>
 </resources>
