@@ -1,5 +1,6 @@
 package com.asmirza.startlines;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -33,7 +34,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
-    private int workingStatus = 0;  // 0 if timebox is not running, 1 if timebox is running
+    private boolean workingStatus = false;  // 0 if timebox is not running, 1 if timebox is running
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private long timeLimitInMillis = Long.MAX_VALUE;  // used when setting a time limit
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         setupSetTimeLimitButton();
         scheduleStartlines();
         scheduleMidnightAlarm();
+        setupBackPressHandler();
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
 
@@ -123,6 +125,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         Log.d("ApplifeCycle", "App is resumed, back in foreground");
         super.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d("ApplifeCycle", "App is destroyed");
+        if (tickingMediaPlayer != null) {
+            stopTickingSound();
+        }
+        killTimeboxHandler();
+        getAndSaveStatuses();
+        super.onDestroy();
+    }
+
+    private void setupBackPressHandler() {
+        /* This will handle the back button press */
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Log.d("MainActivity", "Back button pressed");
+                moveTaskToBack(true);
+            }
+        });
     }
 
     @Override
@@ -203,6 +227,18 @@ public class MainActivity extends AppCompatActivity {
     public boolean isFunModeOn() {
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         return prefs.getBoolean("funMode", false);
+    }
+
+    public boolean isWorking() {
+        return workingStatus;
+    }
+
+    private void setWorkingStatusToTrue() {
+        workingStatus = true;
+    }
+
+    private void setWorkingStatusToFalse() {
+        workingStatus = false;
     }
 
     public boolean isTimeLimitPassed() {
@@ -292,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startTimebox() {
-        if (workingStatus == 1) {
+        if (isWorking()) {
             Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
             Log.w("Timebox", "Timebox already running, not starting a new one");
             return;
@@ -302,7 +338,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void startTimebox(int currentTimeboxDuration) {
         /* For starting the 2 minute staircase timeboxes when the start button is pressed */
-        workingStatus = 1;
+        setWorkingStatusToTrue();
         int timeboxDurationInMillis = currentTimeboxDuration * 60 * 1000;
         long endTimeInMillis = timestampMinutesFromNow(currentTimeboxDuration);
 
@@ -335,12 +371,12 @@ public class MainActivity extends AppCompatActivity {
     public void stopTimebox() {
         /* For stopping the timebox when the stop button is pressed */
         if (timeboxRunnable != null) {
-            handler.removeCallbacks(timeboxRunnable);
+            killTimeboxHandler();
             vibrateOnStop();
             setTimeboxStatusText("0");
             resetWorkingUntilTime();
             stopTickingSound();
-            workingStatus = 0;
+            setWorkingStatusToFalse();
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
@@ -360,7 +396,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showSetTimeLimitDialog() {
         /* Allow users to set a time limit for their timebox using a dialog box */
-        if (workingStatus == 0) {
+        if (!isWorking()) {
             // flash a toast message
             Toast.makeText(this, "Timer is not running, cannot set time limit.", Toast.LENGTH_SHORT).show();
             Log.w("Timebox", "Timebox is not running, cannot set time limit");
@@ -490,6 +526,12 @@ public class MainActivity extends AppCompatActivity {
             tickingMediaPlayer.reset();  // Reset the media player
             tickingMediaPlayer.release();
             tickingMediaPlayer = null;
+        }
+    }
+
+    private void killTimeboxHandler() {
+        if (timeboxRunnable != null) {
+            handler.removeCallbacks(timeboxRunnable);
         }
     }
 

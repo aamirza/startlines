@@ -4,6 +4,8 @@ package com.asmirza.startlines;
 
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -13,20 +15,34 @@ import androidx.core.app.NotificationCompat;
 
 
 public class StartlineService extends Service {
+    private static final String CHANNEL_ID = "startline_channel";
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Let it continue running until it is stopped.
         Log.d("StartlineService", "Startline service entered");
+        createNotificationChannel();
+        // TODO: Fix this for Android SDK 34+ (Android 14+)
         startForeground(1, getNotification());
         Log.d("StartlineService", "Startline foreground service started");
 
         String lineType = intent.getStringExtra("lineType");
         Log.d("StartlineService", "StartlineService entered with lineType: " + lineType);
 
-
-
         //scheduleChecker(15);
         return START_STICKY;
+    }
+
+    private void createNotificationChannel() {
+        CharSequence name = "Startline Channel";
+        String description = "Channel for Startline Service";
+        int importance = NotificationManager.IMPORTANCE_LOW;
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+        channel.setDescription(description);
+
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
+        Log.d("StartlineService", "Startline Notification Channel created");
     }
 
     @Override
