@@ -22,6 +22,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
+    private int workingStatus = 0;  // 0 if timebox is not running, 1 if timebox is running
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private long timeLimitInMillis = Long.MAX_VALUE;  // used when setting a time limit
@@ -287,12 +289,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startTimebox() {
+        if (workingStatus == 1) {
+            Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
+            Log.w("Timebox", "Timebox already running, not starting a new one");
+            return;
+        }
         startTimebox(2);
     }
 
     public void startTimebox(int currentTimeboxDuration) {
         /* For starting the 2 minute staircase timeboxes when the start button is pressed */
-
+        workingStatus = 1;
         int timeboxDurationInMillis = currentTimeboxDuration * 60 * 1000;
         long endTimeInMillis = timestampMinutesFromNow(currentTimeboxDuration);
 
@@ -329,13 +336,22 @@ public class MainActivity extends AppCompatActivity {
             setTimeboxStatusText("0");
             resetWorkingUntilTime();
             stopTickingSound();
-
+            workingStatus = 0;
             Log.d("Timebox", "Timebox stopped");
+        } else {
+            Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
+            Log.w("Timebox", "Timebox is not running. Nothing to stop.");
         }
     }
 
     private void showSetTimeLimitDialog() {
         /* Allow users to set a time limit for their timebox using a dialog box */
+        if (workingStatus == 0) {
+            // flash a toast message
+            Toast.makeText(this, "Timer is not running, cannot set time limit.", Toast.LENGTH_SHORT).show();
+            Log.w("Timebox", "Timebox is not running, cannot set time limit");
+            return;
+        }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Set Time Limit");
 
