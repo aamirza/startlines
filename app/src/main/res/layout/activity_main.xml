@@ -90,7 +90,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:text="@string/set_time_limit_text"
-        app:layout_constraintBottom_toTopOf="@+id/current_timebox"
+        app:layout_constraintBottom_toTopOf="@+id/blocked_apps_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -100,12 +100,12 @@
         android:id="@+id/current_timebox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="0"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/time_limit_button" />
+        app:layout_constraintTop_toBottomOf="@+id/blocked_apps_button" />
 
     <TextView
         android:id="@+id/working_until_text"
@@ -162,5 +162,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/fun_mode_switch"
         tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+    <Button
+        android:id="@+id/blocked_apps_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="@string/manage_blocked_apps_button_text"
+        app:layout_constraintBottom_toTopOf="@+id/current_timebox"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/time_limit_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
