@@ -13,6 +13,8 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.InputType;
@@ -35,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private long timeLimitInMillis = Long.MAX_VALUE;  // used when setting a time limit
+    private Vibrator vibrator;
     private MediaPlayer tickingMediaPlayer;  // will be used for playing the ticking sound
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
@@ -333,6 +336,7 @@ public class MainActivity extends AppCompatActivity {
         /* For stopping the timebox when the stop button is pressed */
         if (timeboxRunnable != null) {
             handler.removeCallbacks(timeboxRunnable);
+            vibrateOnStop();
             setTimeboxStatusText("0");
             resetWorkingUntilTime();
             stopTickingSound();
@@ -342,6 +346,16 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
             Log.w("Timebox", "Timebox is not running. Nothing to stop.");
         }
+    }
+
+    private void vibrateOnStop() {
+        if (vibrator == null) {
+            vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        }
+
+        long[] vibrationPattern = {0, 150, 100, 150, 50, 200, 50, 500};
+        VibrationEffect vibrationEffect = VibrationEffect.createWaveform(vibrationPattern, -1); // -1 means do not repeat
+        vibrator.vibrate(vibrationEffect);
     }
 
     private void showSetTimeLimitDialog() {
