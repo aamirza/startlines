@@ -10,6 +10,8 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class AppBlockingActivity extends AppCompatActivity {
@@ -31,8 +33,9 @@ public class AppBlockingActivity extends AppCompatActivity {
         List<AppInfo> appList = new ArrayList<>();
         PackageManager packageManager = getPackageManager();
         List<ApplicationInfo> apps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
+        List<ApplicationInfo> sortedAppList = sortAppList(apps);
 
-        for (ApplicationInfo app : apps) {
+        for (ApplicationInfo app : sortedAppList) {
             if (packageManager.getLaunchIntentForPackage(app.packageName) != null) {
                 String appName = packageManager.getApplicationLabel(app).toString();
                 Drawable appIcon = packageManager.getApplicationIcon(app);
@@ -40,6 +43,21 @@ public class AppBlockingActivity extends AppCompatActivity {
                 appList.add(new AppInfo(appName, appIcon, packageName));
             }
         }
+
+        return appList;
+    }
+
+    // sort appList by appName alphabetically
+    private List<ApplicationInfo> sortAppList(List<ApplicationInfo> appList) {
+        Collections.sort(appList, new Comparator<ApplicationInfo>() {
+            @Override
+            public int compare(ApplicationInfo app1, ApplicationInfo app2) {
+                PackageManager packageManager = getPackageManager();
+                String appName1 = packageManager.getApplicationLabel(app1).toString();
+                String appName2 = packageManager.getApplicationLabel(app2).toString();
+                return appName1.compareToIgnoreCase(appName2);
+            }
+        });
 
         return appList;
     }
