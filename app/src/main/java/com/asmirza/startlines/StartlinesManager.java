@@ -11,6 +11,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.PowerManager;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -83,6 +86,47 @@ public class StartlinesManager {
         return timeboxRunning;
     }
 
+    public static boolean isScreenOn(Context context) {
+        Log.d("StartlinesManager", "Checking if screen is off");
+        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        boolean screenOn = powerManager.isInteractive();
+        Log.d("StartlinesManager", "Screen on: " + screenOn);
+        return screenOn;
+    }
+
+    /*********************** Code for vibrating the phone during block ************************/
+
+    public static void startVibrationLoop(Context context) {
+        Log.d("StartlinesManager", "Starting vibration loop");
+        new Thread(() -> {
+            while (isAppBlockingModeOn(context) && !isTimeboxRunning(context)) {
+                if (!isScreenOn(context)) {
+                    Log.d("StartlinesManager", "Screen is off, vibrating");
+
+                    Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+                    if (vibrator != null && vibrator.hasVibrator()) {
+                        VibrationEffect effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE);
+                        vibrator.vibrate(effect);
+                    }
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Log.d("StartlinesManager", "Screen is on, not vibrating");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            Log.d("StartlinesManager", "Vibration loop stopped. Timebox started or blocking conditions not met.");
+        }).start();
+    }
+
     /*********************** Code for executing or scheduling startlines ************************/
 
     public static void scheduleStartlines(Context context) {
@@ -141,6 +185,7 @@ public class StartlinesManager {
             incrementStartlinesMissed(context);
             if (isAppBlockingModeOn(context) && !isTimeboxRunning(context)) {
                 openStartlinesApp(context);
+                startVibrationLoop(context);
             }
             scheduleStartlineChecker(context,5, lineType);
         } else if (status.equals("1")) {
