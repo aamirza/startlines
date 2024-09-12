@@ -244,6 +244,13 @@ public class MainActivity extends AppCompatActivity {
         saveStatuses(startlineStatus, funlineStatus, taskName, funMode);
     }
 
+    private void saveWorkingStatus() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("workingStatus", workingStatus);
+        editor.apply();
+    }
+
     public boolean isFunModeOn() {
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         return prefs.getBoolean("funMode", false);
@@ -280,10 +287,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void setWorkingStatusToTrue() {
         workingStatus = true;
+        saveWorkingStatus();
     }
 
     private void setWorkingStatusToFalse() {
         workingStatus = false;
+        saveWorkingStatus();
     }
 
     public boolean isTimeLimitPassed() {

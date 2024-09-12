@@ -44,11 +44,26 @@ public class AppBlockingAccessiblityService extends AccessibilityService {
 
     private void blockApp(String packageName) {
         if (isInAppBlockingMode()) {
-            Log.d("AppBlockingAccessiblityService", "Blocking app: " + packageName);
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            Log.d("AppBlockingAccessiblityService", "Conditions for blocking app met: " + packageName);
+            openStartlinesApp();
+        }
+    }
+
+    private void openStartlinesApp() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (!isTimeboxRunning()) {
             startActivity(intent);
         }
+
+    }
+
+    private boolean isTimeboxRunning() {
+        Log.d("AppBlockingAccessiblityService", "Checking if timebox is running");
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        boolean timeboxRunning = prefs.getBoolean("workingStatus", false);
+        Log.d("AppBlockingAccessiblityService", "Timebox running: " + timeboxRunning);
+        return timeboxRunning;
     }
 
     @Override
