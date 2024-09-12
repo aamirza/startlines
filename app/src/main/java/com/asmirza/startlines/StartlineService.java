@@ -6,12 +6,16 @@ package com.asmirza.startlines;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class StartlineService extends Service {
@@ -26,8 +30,18 @@ public class StartlineService extends Service {
         startForeground(1, getNotification());
         Log.d("StartlineService", "Startline foreground service started");
 
-        String lineType = intent.getStringExtra("lineType");
-        Log.d("StartlineService", "StartlineService entered with lineType: " + lineType);
+        if (intent != null) {
+            String lineType = intent.getStringExtra("lineType");
+            Log.d("StartlineService", "StartlineService entered with lineType: " + lineType);
+
+            if (lineType != null) {
+                if (lineType.equals("midnight")) {
+                    StartlinesManager.scheduleStartlines(this);
+                } else if (lineType.equals("startline") || lineType.equals("funline")) {
+                    StartlinesManager.executeStartlines(this, lineType);
+                }
+            }
+        }
 
         //scheduleChecker(15);
         return START_STICKY;

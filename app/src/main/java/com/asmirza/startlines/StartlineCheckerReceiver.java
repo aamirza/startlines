@@ -11,9 +11,9 @@ public class StartlineCheckerReceiver extends BroadcastReceiver {
         String lineType = intent.getStringExtra("lineType");
         String requestCode = String.valueOf(intent.getIntExtra("requestCode", -1));
         Log.d("StartlineCheckerReceiver", "StartlineCheckerReceiver entered with lineType and request code: " + lineType + " " + requestCode);
-        Intent mainActivityIntent = new Intent(context, MainActivity.class);
-        mainActivityIntent.putExtra("lineType", lineType);
-        mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(mainActivityIntent);
+        Intent serviceIntent = new Intent(context, StartlineService.class);
+        serviceIntent.putExtra("lineType", lineType);
+
+        context.startService(serviceIntent);
     }
 }

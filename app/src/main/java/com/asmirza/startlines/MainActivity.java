@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         scheduleStartlines();
         scheduleMidnightAlarm();
         setupBackPressHandler();
-        //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
+        scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
 
     private void funModeSwitchListener() {
@@ -142,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         Log.d("ApplifeCycle", "App is resumed, back in foreground");
+        loadStatuses();
         super.onResume();
     }
 
