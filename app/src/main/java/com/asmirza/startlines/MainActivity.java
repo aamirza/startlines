@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         setupStartButton();
         setupStopButton();
         setupSetTimeLimitButton();
+        setupManageAppsButton();
         scheduleStartlines();
         scheduleMidnightAlarm();
         setupBackPressHandler();
@@ -111,6 +112,17 @@ public class MainActivity extends AppCompatActivity {
         setTimeLimitButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Set time limit button pressed");
             showSetTimeLimitDialog();
+        });
+    }
+
+    private void setupManageAppsButton() {
+        Button manageAppsButton = findViewById(R.id.blocked_apps_button);
+        Log.d("MainActivity", "Setting up blocked apps button");
+
+        manageAppsButton.setOnClickListener(v -> {
+            Log.d("MainActivity", "Manage apps button pressed");
+            Intent intent = new Intent(this, AppBlockingActivity.class);
+            startActivity(intent);
         });
     }
 

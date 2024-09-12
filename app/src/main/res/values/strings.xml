@@ -12,4 +12,6 @@
     <string name="manage_blocked_apps_button_text">Manage Blocked Apps</string>
     <string name="save_changes_button_text">Save</string>
     <string name="app_icon_description">App Icon</string>
+    <string name="title_activity_app_blocking">AppBlockingActivity</string>
+    <string name="title_activity_app_blocing_java">AppBlocingActivityJava</string>
 </resources>
