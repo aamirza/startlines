@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private long timeLimitInMillis = Long.MAX_VALUE;  // used when setting a time limit
     private Vibrator vibrator;
     private MediaPlayer tickingMediaPlayer;  // will be used for playing the ticking sound
+    private int startLinesMissed = 0;  // how many times you missed a startline, will be used to determine whether to block apps or not
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
     private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
@@ -192,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("funlineStatus", funlineStatus);
         editor.putString("taskName", taskName);
         editor.putBoolean("funMode", funMode);
+        editor.putInt("startLinesMissed", startLinesMissed);
 
         editor.apply(); // Saves changes asynchronously
     }
@@ -205,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
             String funlineStatus = sharedPreferences.getString("funlineStatus", "0");
             String taskName = sharedPreferences.getString("taskName", "");
             boolean funMode = sharedPreferences.getBoolean("funMode", false);
+            startLinesMissed = sharedPreferences.getInt("startLinesMissed", 0);
 
             TextView startlineStatusTextView = findViewById(R.id.startline_status);
             TextView funlineStatusTextView = findViewById(R.id.funline_status);
@@ -244,6 +247,31 @@ public class MainActivity extends AppCompatActivity {
 
     public boolean isWorking() {
         return workingStatus;
+    }
+
+    public boolean isInBlockingMode() {
+        /* Used to determine when to start blocking apps
+
+        Blocking mode is on if:
+            Both Startlines and Funline are X
+            One of them is X and the other is 0, and one startline has been missed
+            One of them is X and the other is 1, and two startlines have been missed
+        Blocking mode is off if:
+            Neither are X
+         */
+
+        String startlineStatus = getStartlineStatus();
+        String funlineStatus = getFunlineStatus();
+
+        if (!startlineStatus.equals("X") && !funlineStatus.equals("X")) {
+            return false;
+        }
+
+        boolean bothAreX = startlineStatus.equals("X") && funlineStatus.equals("X");
+        boolean oneIsXAndOneIs0 = (startlineStatus.equals("X") && funlineStatus.equals("0")) || (startlineStatus.equals("0") && funlineStatus.equals("X"));
+        boolean oneIsXAndOneIs1 = (startlineStatus.equals("X") && funlineStatus.equals("1")) || (startlineStatus.equals("1") && funlineStatus.equals("X"));
+
+        return bothAreX || (oneIsXAndOneIs0 && startLinesMissed >= 1) || (oneIsXAndOneIs1 && startLinesMissed >= 2);
     }
 
     private void setWorkingStatusToTrue() {
@@ -466,6 +494,16 @@ public class MainActivity extends AppCompatActivity {
         currentTimeboxTextView.setText(text);
     }
 
+    private void incrementStartLinesMissed() {
+        startLinesMissed++;
+        Log.d("MainActivity", "Startlines missed: " + startLinesMissed);
+    }
+
+    private void resetStartLinesMissed() {
+        startLinesMissed = 0;
+        Log.d("MainActivity", "Startlines missed reset");
+    }
+
     private void setWorkingUntilText(String timeText) {
         TextView workingUntilTextView = findViewById(R.id.working_until_text);
         Log.d("MainActivity", "Setting working until text to: " + timeText);
@@ -493,6 +531,7 @@ public class MainActivity extends AppCompatActivity {
             setStartlineStatus("1");
             Log.d("MainActivity", "Startline set to 1 after timebox completion");
         }
+        resetStartLinesMissed();
     }
 
     public void executeStartline(String lineType) {
@@ -502,6 +541,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (status.equals("0") || status.equals("X")) {
             setLineStatus(lineType, "X");
+            incrementStartLinesMissed();
             scheduleStartlineChecker(5, lineType);
         } else if (status.equals("1")) {
             setLineStatus(lineType, "0");
@@ -547,6 +587,33 @@ public class MainActivity extends AppCompatActivity {
             handler.removeCallbacks(timeboxRunnable);
         }
     }
+
+    public String getStartlineStatus() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getString("startlineStatus", "0");
+    }
+
+    public String getFunlineStatus() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getString("funlineStatus", "0");
+    }
+
+    public boolean isStartlinesXed() {
+        return getStartlineStatus().equals("X");
+    }
+
+    public boolean isFunlineXed() {
+        return getFunlineStatus().equals("X");
+    }
+
+    public boolean isStartlinesComplete() {
+        return getStartlineStatus().equals("1");
+    }
+
+    public boolean isFunlineComplete() {
+        return getFunlineStatus().equals("1");
+    }
+
 
     private static String timestampToText(long timestamp) {
         /* Converts a timestamp to a human-readable HH:mm format */
