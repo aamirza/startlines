@@ -15,55 +15,10 @@ public class AppBlockingAccessiblityService extends AccessibilityService {
         Log.d("AppBlockingAccessiblityService", "Accessibility event received");
         String packageName = event.getPackageName().toString();
         Log.d("AppBlockingAccessiblityService", "Package name: " + packageName);
-        SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        Set<String> blockedApps = sharedPreferences.getStringSet("blockedApps", new HashSet<>());
-        if (blockedApps.contains(packageName)) {
+        if (StartlinesManager.isAppBlocked(this, packageName)) {
             Log.d("AppBlockingAccessiblityService", "Blocked app detected: " + packageName);
-            blockApp(packageName);
+            StartlinesManager.blockApp(this, packageName);
         }
-    }
-
-    private boolean isInAppBlockingMode() {
-        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        String startlineStatus = prefs.getString("startlineStatus", "0");
-        String funlineStatus = prefs.getString("funlineStatus", "0");
-        int startLinesMissed = prefs.getInt("startlinesMissed", 0);
-
-        if (!startlineStatus.equals("X") && !funlineStatus.equals("X")) {
-            return false;
-        }
-
-        boolean bothAreX = startlineStatus.equals("X") && funlineStatus.equals("X");
-        boolean oneIsXAndOneIs0 = (startlineStatus.equals("X") && funlineStatus.equals("0")) || (startlineStatus.equals("0") && funlineStatus.equals("X"));
-        boolean oneIsXAndOneIs1 = (startlineStatus.equals("X") && funlineStatus.equals("1")) || (startlineStatus.equals("1") && funlineStatus.equals("X"));
-        Log.d("AppBlockingAccessiblityService", "Startlines missed: " + startLinesMissed);
-
-        return bothAreX || (oneIsXAndOneIs0 && startLinesMissed >= 1) || (oneIsXAndOneIs1 && startLinesMissed >= 2);
-
-    }
-
-    private void blockApp(String packageName) {
-        if (isInAppBlockingMode()) {
-            Log.d("AppBlockingAccessiblityService", "Conditions for blocking app met: " + packageName);
-            openStartlinesApp();
-        }
-    }
-
-    private void openStartlinesApp() {
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (!isTimeboxRunning()) {
-            startActivity(intent);
-        }
-
-    }
-
-    private boolean isTimeboxRunning() {
-        Log.d("AppBlockingAccessiblityService", "Checking if timebox is running");
-        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        boolean timeboxRunning = prefs.getBoolean("workingStatus", false);
-        Log.d("AppBlockingAccessiblityService", "Timebox running: " + timeboxRunning);
-        return timeboxRunning;
     }
 
     @Override

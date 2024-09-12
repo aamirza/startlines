@@ -4,6 +4,7 @@ package com.asmirza.startlines;
 
 
 import static android.content.Context.ALARM_SERVICE;
+import static android.content.Context.MODE_PRIVATE;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -14,7 +15,9 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class StartlinesManager {
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
@@ -69,7 +72,7 @@ public class StartlinesManager {
 
     public static void executeStartlines(Context context, String lineType) {
         Log.d("StartlineManager", "Executing startlines for " + lineType);
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
         String status = prefs.getString(lineType + "Status", "0");
@@ -85,7 +88,7 @@ public class StartlinesManager {
     }
 
     public static void setStartlineStatus(Context context, String i) {
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         Log.d("StartlineManager", "Setting startline status to " + i);
 
@@ -94,7 +97,7 @@ public class StartlinesManager {
     }
 
     public static void setFunlineStatus(Context context, String i) {
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         Log.d("StartlineManager", "Setting funline status to " + i);
 
@@ -111,7 +114,7 @@ public class StartlinesManager {
     }
 
     public static void incrementStartlinesMissed(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
         int startlinesMissed = prefs.getInt("startlinesMissed", 0);
@@ -121,7 +124,7 @@ public class StartlinesManager {
     }
 
     public static void resetStartlinesMissed(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
         editor.putInt("startlinesMissed", 0);
@@ -143,4 +146,64 @@ public class StartlinesManager {
 
         Log.d("StartlineManager Scheduler", "Startline checker scheduled for " + minutes + " minutes");
     }
+
+    /*********************** Querying the state of startlines ************************/
+
+    public static boolean isTimeboxRunning(Context context) {
+        Log.d("StartlinesManager", "Checking if timebox is running");
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        boolean timeboxRunning = prefs.getBoolean("workingStatus", false);
+        Log.d("StartlinesManager", "Timebox running: " + timeboxRunning);
+        return timeboxRunning;
+    }
+
+    /*********************** Startlines code for app blocking ************************/
+
+    public static boolean isAppInBlockingMode(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        String startlineStatus = prefs.getString("startlineStatus", "0");
+        String funlineStatus = prefs.getString("funlineStatus", "0");
+        int startLinesMissed = prefs.getInt("startlinesMissed", 0);
+
+        if (!startlineStatus.equals("X") && !funlineStatus.equals("X")) {
+            return false;
+        }
+
+        boolean bothAreX = startlineStatus.equals("X") && funlineStatus.equals("X");
+        boolean oneIsXAndOneIs0 = (startlineStatus.equals("X") && funlineStatus.equals("0")) || (startlineStatus.equals("0") && funlineStatus.equals("X"));
+        boolean oneIsXAndOneIs1 = (startlineStatus.equals("X") && funlineStatus.equals("1")) || (startlineStatus.equals("1") && funlineStatus.equals("X"));
+        Log.d("AppBlockingAccessiblityService", "Startlines missed: " + startLinesMissed);
+
+        return bothAreX || (oneIsXAndOneIs0 && startLinesMissed >= 1) || (oneIsXAndOneIs1 && startLinesMissed >= 2);
+    }
+
+    public static Set<String> getBlockedApps(Context context) {
+        Log.d("StartlinesManager", "Getting blocked apps");
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return sharedPreferences.getStringSet("blockedApps", new HashSet<>());
+    }
+
+    public static boolean isAppBlocked(Context context, String packageName) {
+        Log.d("StartlinesManager", "Checking if app is blocked: " + packageName);
+        Set<String> blockedApps = getBlockedApps(context);
+        boolean isAppBlocked = blockedApps.contains(packageName);
+        Log.d("StartlinesManager", "App is blocked: " + isAppBlocked);
+        return isAppBlocked;
+    }
+
+    public static void blockApp(Context context, String packageName) {
+        if (isAppInBlockingMode(context)) {
+            Log.d("StartlinesManager", "Conditions for blocking app met: " + packageName);
+            openStartlinesApp(context);
+        }
+    }
+
+    public static void openStartlinesApp(Context context) {
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (!isTimeboxRunning(context)) {
+            context.startActivity(intent);
+        }
+    }
+
 }
