@@ -26,6 +26,65 @@ public class StartlinesManager {
 
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
 
+    /*********************** Setting some universal variables ************************/
+
+    public static void setStartlineStatus(Context context, String i) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        Log.d("StartlineManager", "Setting startline status to " + i);
+
+        editor.putString("startlineStatus", i);
+        editor.apply();
+    }
+
+    public static void setFunlineStatus(Context context, String i) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        Log.d("StartlineManager", "Setting funline status to " + i);
+
+        editor.putString("funlineStatus", i);
+        editor.apply();
+    }
+
+    public static void setLineStatus(Context context, String lineType, String status) {
+        if (lineType.equals("startline")) {
+            setStartlineStatus(context, status);
+        } else if (lineType.equals("funline")) {
+            setFunlineStatus(context, status);
+        }
+    }
+
+    public static void incrementStartlinesMissed(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        int startlinesMissed = prefs.getInt("startlinesMissed", 0);
+        editor.putInt("startlinesMissed", startlinesMissed + 1);
+        Log.d("StartlineManager", "Startlines missed: " + (startlinesMissed + 1));
+        editor.apply();
+    }
+
+    public static void resetStartlinesMissed(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putInt("startlinesMissed", 0);
+        Log.d("StartlineManager", "Startlines missed reset");
+        editor.apply();
+    }
+
+    /*********************** Querying the state of startlines ************************/
+
+    public static boolean isTimeboxRunning(Context context) {
+        Log.d("StartlinesManager", "Checking if timebox is running");
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        boolean timeboxRunning = prefs.getBoolean("workingStatus", false);
+        Log.d("StartlinesManager", "Timebox running: " + timeboxRunning);
+        return timeboxRunning;
+    }
+
+    /*********************** Code for executing or scheduling startlines ************************/
+
     public static void scheduleStartlines(Context context) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
 
@@ -87,51 +146,6 @@ public class StartlinesManager {
         }
     }
 
-    public static void setStartlineStatus(Context context, String i) {
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        Log.d("StartlineManager", "Setting startline status to " + i);
-
-        editor.putString("startlineStatus", i);
-        editor.apply();
-    }
-
-    public static void setFunlineStatus(Context context, String i) {
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        Log.d("StartlineManager", "Setting funline status to " + i);
-
-        editor.putString("funlineStatus", i);
-        editor.apply();
-    }
-
-    public static void setLineStatus(Context context, String lineType, String status) {
-        if (lineType.equals("startline")) {
-            setStartlineStatus(context, status);
-        } else if (lineType.equals("funline")) {
-            setFunlineStatus(context, status);
-        }
-    }
-
-    public static void incrementStartlinesMissed(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        int startlinesMissed = prefs.getInt("startlinesMissed", 0);
-        editor.putInt("startlinesMissed", startlinesMissed + 1);
-        Log.d("StartlineManager", "Startlines missed: " + (startlinesMissed + 1));
-        editor.apply();
-    }
-
-    public static void resetStartlinesMissed(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        editor.putInt("startlinesMissed", 0);
-        Log.d("StartlineManager", "Startlines missed reset");
-        editor.apply();
-    }
-
     public static void scheduleStartlineChecker(Context context, int minutes, String lineType) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
         Intent intent = new Intent(context, StartlineCheckerReceiver.class);
@@ -145,16 +159,6 @@ public class StartlinesManager {
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
 
         Log.d("StartlineManager Scheduler", "Startline checker scheduled for " + minutes + " minutes");
-    }
-
-    /*********************** Querying the state of startlines ************************/
-
-    public static boolean isTimeboxRunning(Context context) {
-        Log.d("StartlinesManager", "Checking if timebox is running");
-        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        boolean timeboxRunning = prefs.getBoolean("workingStatus", false);
-        Log.d("StartlinesManager", "Timebox running: " + timeboxRunning);
-        return timeboxRunning;
     }
 
     /*********************** Startlines code for app blocking ************************/
