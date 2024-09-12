@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -38,6 +39,20 @@ public class AppRecyclerViewAdapter extends RecyclerView.Adapter<AppRecyclerView
         AppInfo appInfo = appList.get(position);
         holder.appIconImageView.setImageDrawable(appInfo.getAppIcon());
         holder.appNameTextView.setText(appInfo.getAppName());
+
+        holder.appContainer.setSelected(selectedApps.contains(appInfo));
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selectedApps.contains(appInfo)) {
+                    selectedApps.remove(appInfo);
+                } else {
+                    selectedApps.add(appInfo);
+                }
+                notifyItemChanged(position);
+            }
+        });
     }
 
     @Override
@@ -48,11 +63,13 @@ public class AppRecyclerViewAdapter extends RecyclerView.Adapter<AppRecyclerView
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView appIconImageView;
         TextView appNameTextView;
+        ConstraintLayout appContainer;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             appIconImageView = itemView.findViewById(R.id.app_icon);
             appNameTextView = itemView.findViewById(R.id.app_name);
+            appContainer = itemView.findViewById(R.id.item_container);
         }
     }
 }
