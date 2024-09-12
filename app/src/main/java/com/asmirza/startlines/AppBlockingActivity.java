@@ -42,6 +42,11 @@ public class AppBlockingActivity extends AppCompatActivity {
             saveBlockedApps();
             finish();
         });
+
+        Button cancelButton = findViewById(R.id.cancel_button);
+        cancelButton.setOnClickListener(v -> {
+            finish();
+        });
     }
 
     private List<AppInfo> getInstalledApps() {
