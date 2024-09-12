@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         manageAppsButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Manage apps button pressed");
             Intent intent = new Intent(this, AppBlockingActivity.class);
+            intent.putExtra("blockType", "X_MODE_BLOCK");
             startActivity(intent);
         });
     }

@@ -20,10 +20,18 @@ public class AppRecyclerViewAdapter extends RecyclerView.Adapter<AppRecyclerView
     Context context;
     private List<AppInfo> appList;
     private Set<AppInfo> selectedApps = new HashSet<>();
+    private Set<String> previouslySelectedAppPackageNames;
 
-    public AppRecyclerViewAdapter(Context context, List<AppInfo> appList) {
+    public AppRecyclerViewAdapter(Context context, List<AppInfo> appList, Set<String> previouslySelectedAppPackageNames) {
         this.context = context;
         this.appList = appList;
+        this.previouslySelectedAppPackageNames = previouslySelectedAppPackageNames;
+
+        for (AppInfo appInfo : appList) {
+            if (previouslySelectedAppPackageNames.contains(appInfo.getPackageName())) {
+                selectedApps.add(appInfo);
+            }
+        }
     }
 
     @NonNull
@@ -58,6 +66,10 @@ public class AppRecyclerViewAdapter extends RecyclerView.Adapter<AppRecyclerView
     @Override
     public int getItemCount() {
         return appList.size();
+    }
+
+    public Set<AppInfo> getSelectedApps() {
+        return selectedApps;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
