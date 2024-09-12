@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         setupStopButton();
         setupSetTimeLimitButton();
         setupManageAppsButton();
+        setupManagedDistractingAppsButton();
         if (!isAccessibilityServiceEnabled()) {
             showAccessibilityServiceDialog();
         }
@@ -128,6 +129,18 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "Manage apps button pressed");
             Intent intent = new Intent(this, AppBlockingActivity.class);
             intent.putExtra("blockType", "X_MODE_BLOCK");
+            startActivity(intent);
+        });
+    }
+
+    private void setupManagedDistractingAppsButton() {
+        Button manageDistractingAppsButton = findViewById(R.id.distracting_apps_button);
+        Log.d("MainActivity", "Setting up distracting apps button");
+
+        manageDistractingAppsButton.setOnClickListener(v -> {
+            Log.d("MainActivity", "Manage distracting apps button pressed");
+            Intent intent = new Intent(this, AppBlockingActivity.class);
+            intent.putExtra("blockType", "DISTRACTING_APPS_BLOCK");
             startActivity(intent);
         });
     }

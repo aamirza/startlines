@@ -105,7 +105,7 @@
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/blocked_apps_button" />
+        app:layout_constraintTop_toBottomOf="@id/distracting_apps_button" />
 
     <TextView
         android:id="@+id/working_until_text"
@@ -170,11 +170,23 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
         android:text="@string/manage_blocked_apps_button_text"
-        app:layout_constraintBottom_toTopOf="@+id/current_timebox"
+        app:layout_constraintBottom_toTopOf="@id/distracting_apps_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/time_limit_button" />
+
+    <Button
+        android:id="@+id/distracting_apps_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:text="@string/distracting_apps_button_text"
+        app:layout_constraintBottom_toTopOf="@+id/current_timebox"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/blocked_apps_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

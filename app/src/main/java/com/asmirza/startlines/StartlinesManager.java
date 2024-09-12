@@ -139,7 +139,7 @@ public class StartlinesManager {
         if (status.equals("0") || status.equals("X")) {
             setLineStatus(context, lineType, "X");
             incrementStartlinesMissed(context);
-            if (isAppInBlockingMode(context) && !isTimeboxRunning(context)) {
+            if (isAppBlockingModeOn(context) && !isTimeboxRunning(context)) {
                 openStartlinesApp(context);
             }
             scheduleStartlineChecker(context,5, lineType);
@@ -166,7 +166,7 @@ public class StartlinesManager {
 
     /*********************** Startlines code for app blocking ************************/
 
-    public static boolean isAppInBlockingMode(Context context) {
+    public static boolean isAppBlockingModeOn(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         String startlineStatus = prefs.getString("startlineStatus", "0");
         String funlineStatus = prefs.getString("funlineStatus", "0");
@@ -190,6 +190,12 @@ public class StartlinesManager {
         return sharedPreferences.getStringSet("blockedApps", new HashSet<>());
     }
 
+    public static Set<String> getDistractingApps(Context context) {
+        Log.d("StartlinesManager", "Getting distracting apps");
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return sharedPreferences.getStringSet("distractingApps", new HashSet<>());
+    }
+
     public static boolean isAppBlocked(Context context, String packageName) {
         Log.d("StartlinesManager", "Checking if app is blocked: " + packageName);
         Set<String> blockedApps = getBlockedApps(context);
@@ -198,9 +204,24 @@ public class StartlinesManager {
         return isAppBlocked;
     }
 
+    public static boolean isAppDistracting(Context context, String packageName) {
+        Log.d("StartlinesManager", "Checking if app is distracting: " + packageName);
+        Set<String> distractingApps = getDistractingApps(context);
+        boolean isAppDistracting = distractingApps.contains(packageName);
+        Log.d("StartlinesManager", "App is blocked when working: " + isAppDistracting);
+        return isAppDistracting;
+    }
+
     public static void blockApp(Context context, String packageName) {
-        if (isAppInBlockingMode(context)) {
+        if (isAppBlockingModeOn(context)) {
             Log.d("StartlinesManager", "Conditions for blocking app met: " + packageName);
+            openStartlinesApp(context);
+        }
+    }
+
+    public static void blockDistractingApp(Context context, String packageName) {
+        if (isTimeboxRunning(context)) {
+            Log.d("StartlinesManager", "Conditions for blocking distracting app met: " + packageName);
             openStartlinesApp(context);
         }
     }
@@ -208,9 +229,7 @@ public class StartlinesManager {
     public static void openStartlinesApp(Context context) {
         Intent intent = new Intent(context, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (!isTimeboxRunning(context)) {
-            context.startActivity(intent);
-        }
+        context.startActivity(intent);
     }
 
 }
