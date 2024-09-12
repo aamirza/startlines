@@ -139,6 +139,9 @@ public class StartlinesManager {
         if (status.equals("0") || status.equals("X")) {
             setLineStatus(context, lineType, "X");
             incrementStartlinesMissed(context);
+            if (isAppInBlockingMode(context) && !isTimeboxRunning(context)) {
+                openStartlinesApp(context);
+            }
             scheduleStartlineChecker(context,5, lineType);
         } else if (status.equals("1")) {
             setLineStatus(context, lineType, "0");
