@@ -11,6 +11,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.PowerManager;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -98,8 +99,10 @@ public class StartlinesManager {
 
     public static void startVibrationLoop(Context context) {
         Log.d("StartlinesManager", "Starting vibration loop");
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         new Thread(() -> {
-            while (isAppBlockingModeOn(context) && !isTimeboxRunning(context)) {
+            while (isAppBlockingModeOn(context) && !isTimeboxRunning(context)
+                    && audioManager.getRingerMode() != AudioManager.RINGER_MODE_SILENT) {
                 if (!isScreenOn(context)) {
                     Log.d("StartlinesManager", "Screen is off, vibrating");
 
@@ -108,22 +111,18 @@ public class StartlinesManager {
                         VibrationEffect effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE);
                         vibrator.vibrate(effect);
                     }
-
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                 } else {
                     Log.d("StartlinesManager", "Screen is on, not vibrating");
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    break;
                 }
             }
-            Log.d("StartlinesManager", "Vibration loop stopped. Timebox started or blocking conditions not met.");
+            Log.d("StartlinesManager", "Vibration loop stopped. Timebox started, phone is silent, or blocking conditions not met.");
         }).start();
     }
 
