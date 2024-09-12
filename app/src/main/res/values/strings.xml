@@ -15,4 +15,5 @@
     <string name="title_activity_app_blocking">AppBlockingActivity</string>
     <string name="title_activity_app_blocing_java">AppBlocingActivityJava</string>
     <string name="app_list_cancel_button_text">Cancel</string>
+    <string name="app_blocking_service_description">Startline\'s App Blocking Service</string>
 </resources>

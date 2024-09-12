@@ -19,6 +19,7 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.Button;
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private long timeLimitInMillis = Long.MAX_VALUE;  // used when setting a time limit
     private Vibrator vibrator;
     private MediaPlayer tickingMediaPlayer;  // will be used for playing the ticking sound
-    private int startLinesMissed = 0;  // how many times you missed a startline, will be used to determine whether to block apps or not
+    private int startlinesMissed = 0;  // how many times you missed a startline, will be used to determine whether to block apps or not
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
     private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
@@ -69,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
         setupStopButton();
         setupSetTimeLimitButton();
         setupManageAppsButton();
+        if (!isAccessibilityServiceEnabled()) {
+            showAccessibilityServiceDialog();
+        }
         scheduleStartlines();
         scheduleMidnightAlarm();
         setupBackPressHandler();
@@ -193,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("funlineStatus", funlineStatus);
         editor.putString("taskName", taskName);
         editor.putBoolean("funMode", funMode);
-        editor.putInt("startLinesMissed", startLinesMissed);
+        editor.putInt("startlinesMissed", startlinesMissed);
 
         editor.apply(); // Saves changes asynchronously
     }
@@ -207,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
             String funlineStatus = sharedPreferences.getString("funlineStatus", "0");
             String taskName = sharedPreferences.getString("taskName", "");
             boolean funMode = sharedPreferences.getBoolean("funMode", false);
-            startLinesMissed = sharedPreferences.getInt("startLinesMissed", 0);
+            startlinesMissed = sharedPreferences.getInt("startlinesMissed", 0);
 
             TextView startlineStatusTextView = findViewById(R.id.startline_status);
             TextView funlineStatusTextView = findViewById(R.id.funline_status);
@@ -271,7 +275,7 @@ public class MainActivity extends AppCompatActivity {
         boolean oneIsXAndOneIs0 = (startlineStatus.equals("X") && funlineStatus.equals("0")) || (startlineStatus.equals("0") && funlineStatus.equals("X"));
         boolean oneIsXAndOneIs1 = (startlineStatus.equals("X") && funlineStatus.equals("1")) || (startlineStatus.equals("1") && funlineStatus.equals("X"));
 
-        return bothAreX || (oneIsXAndOneIs0 && startLinesMissed >= 1) || (oneIsXAndOneIs1 && startLinesMissed >= 2);
+        return bothAreX || (oneIsXAndOneIs0 && startlinesMissed >= 1) || (oneIsXAndOneIs1 && startlinesMissed >= 2);
     }
 
     private void setWorkingStatusToTrue() {
@@ -494,13 +498,15 @@ public class MainActivity extends AppCompatActivity {
         currentTimeboxTextView.setText(text);
     }
 
-    private void incrementStartLinesMissed() {
-        startLinesMissed++;
-        Log.d("MainActivity", "Startlines missed: " + startLinesMissed);
+    private void incrementStartlinesMissed() {
+        startlinesMissed++;
+        getAndSaveStatuses();
+        Log.d("MainActivity", "Startlines missed: " + startlinesMissed);
     }
 
-    private void resetStartLinesMissed() {
-        startLinesMissed = 0;
+    private void resetStartlinesMissed() {
+        startlinesMissed = 0;
+        getAndSaveStatuses();
         Log.d("MainActivity", "Startlines missed reset");
     }
 
@@ -531,7 +537,7 @@ public class MainActivity extends AppCompatActivity {
             setStartlineStatus("1");
             Log.d("MainActivity", "Startline set to 1 after timebox completion");
         }
-        resetStartLinesMissed();
+        resetStartlinesMissed();
     }
 
     public void executeStartline(String lineType) {
@@ -541,10 +547,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (status.equals("0") || status.equals("X")) {
             setLineStatus(lineType, "X");
-            incrementStartLinesMissed();
+            incrementStartlinesMissed();
             scheduleStartlineChecker(5, lineType);
         } else if (status.equals("1")) {
             setLineStatus(lineType, "0");
+            resetStartlinesMissed();
         }
     }
 
@@ -613,6 +620,57 @@ public class MainActivity extends AppCompatActivity {
     public boolean isFunlineComplete() {
         return getFunlineStatus().equals("1");
     }
+
+    private boolean isAccessibilityServiceEnabled() {
+        int accessibilityEnabled = 0;
+        final String service = getPackageName() + "/" + AppBlockingAccessiblityService.class.getCanonicalName();
+        try {
+            accessibilityEnabled = Settings.Secure.getInt(
+                    getContentResolver(),
+                    Settings.Secure.ACCESSIBILITY_ENABLED
+            );
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        TextUtils.SimpleStringSplitter splitter = new TextUtils.SimpleStringSplitter(':');
+        if (accessibilityEnabled == 1) {
+            String enabledServices = Settings.Secure.getString(
+                    getContentResolver(),
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            );
+            if (enabledServices != null) {
+                splitter.setString(enabledServices);
+                while (splitter.hasNext()) {
+                    String serviceName = splitter.next();
+                    if (serviceName.equalsIgnoreCase(service)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void showAccessibilityServiceDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Enable Accessibility Service")
+                .setMessage("To block distracting apps, please enable accessibility service for Startlines.")
+                .setPositiveButton("Go to Settings", (dialog, which) -> {
+                    openAccessibilitySettings();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    private void openAccessibilitySettings() {
+        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        startActivity(intent);
+    }
+
+
 
 
     private static String timestampToText(long timestamp) {
