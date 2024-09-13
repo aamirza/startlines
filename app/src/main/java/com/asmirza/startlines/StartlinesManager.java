@@ -77,6 +77,15 @@ public class StartlinesManager {
         editor.apply();
     }
 
+    public static void setFunMode(Context context, boolean funMode) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putBoolean("funMode", funMode);
+        Log.d("StartlineManager", "Fun mode set: " + funMode);
+        editor.apply();
+    }
+
     /*********************** Querying the state of startlines ************************/
 
     public static boolean isTimeboxRunning(Context context) {

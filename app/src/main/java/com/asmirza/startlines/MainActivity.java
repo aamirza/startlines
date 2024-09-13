@@ -84,10 +84,7 @@ public class MainActivity extends AppCompatActivity {
         Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
 
         funModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putBoolean("funMode", isChecked);
-            editor.apply();
+            StartlinesManager.setFunMode(this, isChecked);
         });
     }
 
