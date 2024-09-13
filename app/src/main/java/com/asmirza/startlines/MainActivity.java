@@ -72,13 +72,14 @@ public class MainActivity extends AppCompatActivity {
         setupSetTimeLimitButton();
         setupManageAppsButton();
         setupManagedDistractingAppsButton();
+        setupManageMusicAppsButton();
         if (!isAccessibilityServiceEnabled()) {
             showAccessibilityServiceDialog();
         }
         scheduleStartlines();
         scheduleMidnightAlarm();
         setupBackPressHandler();
-        scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
+        //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
 
     private void funModeSwitchListener() {
@@ -147,6 +148,18 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "Manage distracting apps button pressed");
             Intent intent = new Intent(this, AppBlockingActivity.class);
             intent.putExtra("blockType", "DISTRACTING_APPS_BLOCK");
+            startActivity(intent);
+        });
+    }
+
+    private void setupManageMusicAppsButton() {
+        Button manageMusicAppsButton = findViewById(R.id.music_apps_button);
+        Log.d("MainActivity", "Setting up music apps button");
+
+        manageMusicAppsButton.setOnClickListener(v -> {
+            Log.d("MainActivity", "Manage music apps button pressed");
+            Intent intent = new Intent(this, AppBlockingActivity.class);
+            intent.putExtra("blockType", "MUSIC_APPS");
             startActivity(intent);
         });
     }
