@@ -86,6 +86,19 @@ public class StartlinesManager {
         editor.apply();
     }
 
+    public static void setMusicMode(Context context, boolean musicMode) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putBoolean("musicMode", musicMode);
+        Log.d("StartlineManager", "Music mode set: " + musicMode);
+        editor.apply();
+    }
+
+    public static void setMusicModeOn(Context context) {
+        setMusicMode(context, true);
+    }
+
     /*********************** Querying the state of startlines ************************/
 
     public static boolean isTimeboxRunning(Context context) {

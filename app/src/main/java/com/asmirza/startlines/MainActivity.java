@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         loadStatuses();
         addTextChangeListener();
         funModeSwitchListener();
+        musicModeSwitchListener();
         setupStartButton();
         setupStopButton();
         setupSetTimeLimitButton();
@@ -85,6 +86,14 @@ public class MainActivity extends AppCompatActivity {
 
         funModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             StartlinesManager.setFunMode(this, isChecked);
+        });
+    }
+
+    private void musicModeSwitchListener() {
+        Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
+
+        musicModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            StartlinesManager.setMusicMode(this, isChecked);
         });
     }
 
@@ -199,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode) {
+    public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode, boolean musicMode) {
         /* Save Startlines, Funline, and Task Name in case of reboot or app close */
         SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -209,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("taskName", taskName);
         editor.putBoolean("funMode", funMode);
         editor.putInt("startlinesMissed", startlinesMissed);
+        editor.putBoolean("musicMode", musicMode);
 
         editor.apply(); // Saves changes asynchronously
     }
@@ -223,19 +233,22 @@ public class MainActivity extends AppCompatActivity {
             String taskName = sharedPreferences.getString("taskName", "");
             boolean funMode = sharedPreferences.getBoolean("funMode", false);
             startlinesMissed = sharedPreferences.getInt("startlinesMissed", 0);
+            boolean musicMode = sharedPreferences.getBoolean("musicMode", true);
 
             TextView startlineStatusTextView = findViewById(R.id.startline_status);
             TextView funlineStatusTextView = findViewById(R.id.funline_status);
             TextView taskNameTextView = findViewById(R.id.task_name);
             Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
+            Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
 
 
             startlineStatusTextView.setText(startlineStatus);
             funlineStatusTextView.setText(funlineStatus);
             taskNameTextView.setText(taskName);
             funModeSwitch.setChecked(funMode);
+            musicModeSwitch.setChecked(musicMode);
         } catch (Exception e) {
-            saveStatuses("0", "0", "", false);
+            saveStatuses("0", "0", "", false, true);
             loadStatuses();
         }
     }
@@ -246,13 +259,15 @@ public class MainActivity extends AppCompatActivity {
         TextView funlineStatusTextView = findViewById(R.id.funline_status);
         EditText taskNameTextView = findViewById(R.id.task_name);
         Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
+        Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
 
         String startlineStatus = startlineStatusTextView.getText().toString();
         String funlineStatus = funlineStatusTextView.getText().toString();
         String taskName = taskNameTextView.getText().toString();
         boolean funMode = funModeSwitch.isChecked();
+        boolean musicMode = musicModeSwitch.isChecked();
 
-        saveStatuses(startlineStatus, funlineStatus, taskName, funMode);
+        saveStatuses(startlineStatus, funlineStatus, taskName, funMode, musicMode);
     }
 
     private void saveWorkingStatus() {
