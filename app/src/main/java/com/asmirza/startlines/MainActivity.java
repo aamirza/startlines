@@ -625,6 +625,7 @@ public class MainActivity extends AppCompatActivity {
             tickingMediaPlayer = MediaPlayer.create(this, R.raw.clock_tick);
             tickingMediaPlayer.setLooping(true);
         }
+        StartlinesManager.setTickingSoundPlaying(this, true);
         tickingMediaPlayer.start();
     }
 
@@ -634,6 +635,7 @@ public class MainActivity extends AppCompatActivity {
             tickingMediaPlayer.reset();  // Reset the media player
             tickingMediaPlayer.release();
             tickingMediaPlayer = null;
+            StartlinesManager.setTickingSoundPlaying(this, false);
         }
     }
 

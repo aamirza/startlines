@@ -99,6 +99,15 @@ public class StartlinesManager {
         setMusicMode(context, true);
     }
 
+    public static void setTickingSoundPlaying(Context context, boolean tickingSoundPlaying) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putBoolean("tickingSoundPlaying", tickingSoundPlaying);
+        Log.d("StartlineManager", "Ticking sound playing: " + tickingSoundPlaying);
+        editor.apply();
+    }
+
     /*********************** Querying the state of startlines ************************/
 
     public static boolean isTimeboxRunning(Context context) {
@@ -115,6 +124,20 @@ public class StartlinesManager {
         boolean screenOn = powerManager.isInteractive();
         Log.d("StartlinesManager", "Screen on: " + screenOn);
         return screenOn;
+    }
+
+    public static boolean isMusicModeOn(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        boolean musicMode = prefs.getBoolean("musicMode", false);
+        Log.d("StartlinesManager", "Music mode: " + musicMode);
+        return musicMode;
+    }
+
+    public static boolean isTickingSoundPlaying(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        boolean tickingSoundPlaying = prefs.getBoolean("tickingSoundPlaying", false);
+        Log.d("StartlinesManager", "Ticking sound playing: " + tickingSoundPlaying);
+        return tickingSoundPlaying;
     }
 
     /*********************** Code for vibrating the phone during block ************************/
@@ -279,17 +302,13 @@ public class StartlinesManager {
     }
 
     public static void blockApp(Context context, String packageName) {
-        if (isAppBlockingModeOn(context)) {
-            Log.d("StartlinesManager", "Conditions for blocking app met: " + packageName);
-            openStartlinesApp(context);
-        }
+        Log.d("StartlinesManager", "Conditions for blocking app met: " + packageName);
+        openStartlinesApp(context);
     }
 
     public static void blockDistractingApp(Context context, String packageName) {
-        if (isTimeboxRunning(context)) {
-            Log.d("StartlinesManager", "Conditions for blocking distracting app met: " + packageName);
-            openStartlinesApp(context);
-        }
+        Log.d("StartlinesManager", "Conditions for blocking distracting app met: " + packageName);
+        openStartlinesApp(context);
     }
 
     public static void openStartlinesApp(Context context) {
@@ -298,4 +317,72 @@ public class StartlinesManager {
         context.startActivity(intent);
     }
 
+    public static void blockAppIfNecessary(Context context, String packageName) {
+        boolean working = StartlinesManager.isTimeboxRunning(context);
+
+        if (working && isAppDistracting(context, packageName)) {
+            Log.d("StartlinesManager Blocker", "Distracting app detected, blocking: " + packageName);
+            // For blocking distracting apps when working
+            if (isMusicModeOnAndAppNotPlayingMedia(context)) {
+                openRandomMusicApp(context);
+            } else {
+                blockDistractingApp(context, packageName);
+            }
+        } else if (!working && isAppBlocked(context, packageName)) {
+            Log.d("AppBlockingAccessiblityService", "Blocked app detected: " + packageName);
+            if (isAppBlockingModeOn(context)) {
+                blockApp(context, packageName);
+            } else if (isMusicModeOnAndAppNotPlayingMedia(context)) {
+                Log.d("StartlinesManager Blocker", "Music mode on and no music app playing media");
+                openRandomMusicApp(context);
+            }
+        }
+    }
+
+    /*********************** Music-mode related code ************************/
+
+    public static Set<String> getMusicApps(Context context) {
+        Log.d("StartlinesManager", "Getting music apps");
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        Set<String> musicApps = sharedPreferences.getStringSet("musicApps", new HashSet<>());
+        return musicApps;
+    }
+
+    public static void openRandomMusicApp(Context context) {
+        Set<String> musicApps = getMusicApps(context);
+        if (musicApps.isEmpty()) {
+            Log.d("StartlinesManager", "No music apps selected");
+            return;
+        }
+
+        List<String> musicAppsList = new ArrayList<>(musicApps);
+        int randomIndex = (int) (Math.random() * musicAppsList.size());
+        String randomMusicApp = musicAppsList.get(randomIndex);
+
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(randomMusicApp);
+        if (launchIntent != null) {
+            Log.d("StartlinesManager", "Opening music app: " + randomMusicApp);
+            context.startActivity(launchIntent);
+        }
+    }
+
+    public static boolean isMusicModeAppPlayingMedia(Context context) {
+        if (isTickingSoundPlaying(context)) {
+            Log.d("StartlinesManager", "Ticking sound is playing, assuming no music is playing.");
+            return false;
+        }
+
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        boolean musicPlaying = audioManager.isMusicActive();
+
+        Log.d("StartlinesManager", "Music playing: " + musicPlaying);
+        return musicPlaying;
+    }
+
+    public static boolean isMusicModeOnAndAppNotPlayingMedia(Context context) {
+        boolean musicMode = isMusicModeOn(context);
+        boolean appPlayingMedia = isMusicModeAppPlayingMedia(context);
+
+        return musicMode && !appPlayingMedia;
+    }
 }
