@@ -76,9 +76,6 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("");
-        setupManageAppsButton();
-        setupManagedDistractingAppsButton();
-        setupManageMusicAppsButton();
         if (!isAccessibilityServiceEnabled()) {
             showAccessibilityServiceDialog();
         }
@@ -117,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "Manage music apps button pressed");
             Intent intent = new Intent(this, AppBlockingActivity.class);
             intent.putExtra("blockType", "MUSIC_APPS");
+            startActivity(intent);
             return true;
         }
 
@@ -166,42 +164,6 @@ public class MainActivity extends AppCompatActivity {
         setTimeLimitButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Set time limit button pressed");
             showSetTimeLimitDialog();
-        });
-    }
-
-    private void setupManageAppsButton() {
-        Button manageAppsButton = findViewById(R.id.blocked_apps_button);
-        Log.d("MainActivity", "Setting up blocked apps button");
-
-        manageAppsButton.setOnClickListener(v -> {
-            Log.d("MainActivity", "Manage apps button pressed");
-            Intent intent = new Intent(this, AppBlockingActivity.class);
-            intent.putExtra("blockType", "X_MODE_BLOCK");
-            startActivity(intent);
-        });
-    }
-
-    private void setupManagedDistractingAppsButton() {
-        Button manageDistractingAppsButton = findViewById(R.id.distracting_apps_button);
-        Log.d("MainActivity", "Setting up distracting apps button");
-
-        manageDistractingAppsButton.setOnClickListener(v -> {
-            Log.d("MainActivity", "Manage distracting apps button pressed");
-            Intent intent = new Intent(this, AppBlockingActivity.class);
-            intent.putExtra("blockType", "DISTRACTING_APPS_BLOCK");
-            startActivity(intent);
-        });
-    }
-
-    private void setupManageMusicAppsButton() {
-        Button manageMusicAppsButton = findViewById(R.id.music_apps_button);
-        Log.d("MainActivity", "Setting up music apps button");
-
-        manageMusicAppsButton.setOnClickListener(v -> {
-            Log.d("MainActivity", "Manage music apps button pressed");
-            Intent intent = new Intent(this, AppBlockingActivity.class);
-            intent.putExtra("blockType", "MUSIC_APPS");
-            startActivity(intent);
         });
     }
 
