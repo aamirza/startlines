@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/manage_blocked_apps"
+        android:title="@string/manage_blocked_apps_button_text"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/manage_distracting_apps"
+        android:title="@string/distracting_apps_button_text"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/manage_music_apps"
+        android:title="@string/music_apps_button_text"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+</menu>

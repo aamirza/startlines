@@ -2,6 +2,7 @@ package com.asmirza.startlines;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import android.app.AlarmManager;
@@ -22,6 +23,8 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -70,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
         setupStartButton();
         setupStopButton();
         setupSetTimeLimitButton();
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("");
         setupManageAppsButton();
         setupManagedDistractingAppsButton();
         setupManageMusicAppsButton();
@@ -80,6 +86,41 @@ public class MainActivity extends AppCompatActivity {
         scheduleMidnightAlarm();
         setupBackPressHandler();
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.manage_blocked_apps) {
+            Log.d("MainActivity", "Manage blocked apps button pressed");
+            Intent intent = new Intent(this, AppBlockingActivity.class);
+            intent.putExtra("blockType", "X_MODE_BLOCK");
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.manage_distracting_apps) {
+            // Open the Manage Distracting Apps screen
+            Log.d("MainActivity", "Manage distracting apps button pressed");
+            Intent intent = new Intent(this, AppBlockingActivity.class);
+            intent.putExtra("blockType", "DISTRACTING_APPS_BLOCK");
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.manage_music_apps) {
+            // Open the Manage Music Apps screen
+            Log.d("MainActivity", "Manage music apps button pressed");
+            Intent intent = new Intent(this, AppBlockingActivity.class);
+            intent.putExtra("blockType", "MUSIC_APPS");
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void funModeSwitchListener() {
