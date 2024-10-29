@@ -140,6 +140,26 @@ public class StartlinesManager {
         return tickingSoundPlaying;
     }
 
+    public static String getStartlineStatus(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getString("startlineStatus", "0");
+    }
+
+    public static String getFunlineStatus(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getString("funlineStatus", "0");
+    }
+
+    public static String getIpAddress(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getString("serverIp", "192.168.2.16");
+    }
+
+    public static int getPort(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getInt("serverPort", 12345);
+    }
+
     /*********************** Code for vibrating the phone during block ************************/
 
     public static void startVibrationLoop(Context context) {
@@ -227,6 +247,7 @@ public class StartlinesManager {
         if (status.equals("0") || status.equals("X")) {
             setLineStatus(context, lineType, "X");
             incrementStartlinesMissed(context);
+            sendStartlineMessageToServer(context);
             if (isAppBlockingModeOn(context) && !isTimeboxRunning(context)) {
                 openStartlinesApp(context);
                 startVibrationLoop(context);
@@ -234,6 +255,7 @@ public class StartlinesManager {
             scheduleStartlineChecker(context,5, lineType);
         } else if (status.equals("1")) {
             setLineStatus(context, lineType, "0");
+            sendStartlineMessageToServer(context);
             resetStartlinesMissed(context);
         }
     }
@@ -384,5 +406,21 @@ public class StartlinesManager {
         boolean appPlayingMedia = isMusicModeAppPlayingMedia(context);
 
         return musicMode && !appPlayingMedia;
+    }
+
+    private static String createStatusMessage(Context context) {
+        String startlineStatus = getStartlineStatus(context);
+        String funlineStatus = getFunlineStatus(context);
+        String workingStatus = isTimeboxRunning(context) ? "1" : "0";
+        String appBlockingMode = isAppBlockingModeOn(context) ? "1" : "0";
+        return "{ \"startline\": \"" + startlineStatus + "\", " +
+                "\"funline\": \"" + funlineStatus + "\", " +
+                "\"working\": \"" + workingStatus + "\", " +
+                "\"blocked\": \"" + appBlockingMode + "\" }";
+    }
+
+    public static void sendStartlineMessageToServer(Context context) {
+        Log.d("MainActivity", "Sending status message to server");
+        SocketClient.sendMessageToServer(createStatusMessage(context), getIpAddress(context), getPort(context));
     }
 }

@@ -18,4 +18,5 @@
     <string name="app_blocking_service_description">Startline\'s App Blocking Service</string>
     <string name="distracting_apps_button_text">Manage Apps Blocked When Working</string>
     <string name="music_apps_button_text">Manage Music Apps</string>
+    <string name="ip_and_port_settings_menu_button">IP and Port Settings</string>
 </resources>

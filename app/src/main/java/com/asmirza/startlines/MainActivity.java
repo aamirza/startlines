@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
         scheduleStartlines();
         scheduleMidnightAlarm();
         setupBackPressHandler();
+        StartlinesManager.sendStartlineMessageToServer(this);
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
 
@@ -115,6 +117,9 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, AppBlockingActivity.class);
             intent.putExtra("blockType", "MUSIC_APPS");
             startActivity(intent);
+            return true;
+        } else if (item.getItemId() == R.id.ip_port_settings) {
+            openIPSettingsDialog();
             return true;
         }
 
@@ -437,6 +442,7 @@ public class MainActivity extends AppCompatActivity {
         setWorkingStatusToTrue();
         int timeboxDurationInMillis = currentTimeboxDuration * 60 * 1000;
         long endTimeInMillis = timestampMinutesFromNow(currentTimeboxDuration);
+        StartlinesManager.sendStartlineMessageToServer(this);
 
 
         String endTimeFormatted = timestampToText(endTimeInMillis);
@@ -473,6 +479,7 @@ public class MainActivity extends AppCompatActivity {
             resetWorkingUntilTime();
             stopTickingSound();
             setWorkingStatusToFalse();
+            StartlinesManager.sendStartlineMessageToServer(this);
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
@@ -723,6 +730,50 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void openIPSettingsDialog() {
+        // Fetch saved IP and port from SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        String savedIp = prefs.getString("serverIp", "192.168.1.1");
+        int savedPort = prefs.getInt("serverPort", 12345);
+
+        // Create an AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("IP and Port Settings");
+
+        // Create a custom layout for the dialog
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        // Add an EditText for IP
+        EditText ipInput = new EditText(this);
+        ipInput.setHint("Server IP Address");
+        ipInput.setText(savedIp);
+        layout.addView(ipInput);
+
+        // Add an EditText for Port
+        EditText portInput = new EditText(this);
+        portInput.setHint("Server Port");
+        portInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        portInput.setText(String.valueOf(savedPort));
+        layout.addView(portInput);
+
+        builder.setView(layout);
+
+        // Save the new values when "OK" is clicked
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String ip = ipInput.getText().toString();
+            int port = Integer.parseInt(portInput.getText().toString());
+
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("serverIp", ip);
+            editor.putInt("serverPort", port);
+            editor.apply();
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
 
 
 

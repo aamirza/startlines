@@ -18,4 +18,9 @@
         android:title="@string/music_apps_button_text"
         android:orderInCategory="100"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/ip_port_settings"
+        android:title="@string/ip_and_port_settings_menu_button"
+        app:showAsAction="never" />
 </menu>
