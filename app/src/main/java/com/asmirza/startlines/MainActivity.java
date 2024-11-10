@@ -480,10 +480,18 @@ public class MainActivity extends AppCompatActivity {
             stopTickingSound();
             setWorkingStatusToFalse();
             StartlinesManager.sendStartlineMessageToServer(this);
+            switchMusicModeToOn();
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
             Log.w("Timebox", "Timebox is not running. Nothing to stop.");
+        }
+    }
+
+    private void switchMusicModeToOn() {
+        Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
+        if (!musicModeSwitch.isChecked()) {
+            musicModeSwitch.setChecked(true);
         }
     }
 
