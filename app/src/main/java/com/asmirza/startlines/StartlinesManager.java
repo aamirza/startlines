@@ -16,6 +16,7 @@ import android.os.PowerManager;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -175,6 +176,7 @@ public class StartlinesManager {
                     if (vibrator != null && vibrator.hasVibrator()) {
                         VibrationEffect effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE);
                         vibrator.vibrate(effect);
+                        pauseMusic(context);
                     }
                 } else {
                     Log.d("StartlinesManager", "Screen is on, not vibrating");
@@ -189,6 +191,26 @@ public class StartlinesManager {
             }
             Log.d("StartlinesManager", "Vibration loop stopped. Timebox started, phone is silent, or blocking conditions not met.");
         }).start();
+    }
+
+    /*********************** Code for pausing music ************************/
+
+    public static void pauseMusic(Context context) {
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+
+        if (audioManager.isMusicActive()) {
+            Log.d("StartlinesManager", "Pausing music");
+
+            KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE);
+            audioManager.dispatchMediaKeyEvent(keyEvent);
+
+            keyEvent = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE);
+            audioManager.dispatchMediaKeyEvent(keyEvent);
+
+            Log.d("StartlinesManager", "Music paused");
+        } else {
+            Log.d("StartlinesManager", "No music playing");
+        }
     }
 
     /*********************** Code for executing or scheduling startlines ************************/
