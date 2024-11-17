@@ -49,6 +49,7 @@
         android:layout_marginTop="8dp"
         android:text="0"
         android:textSize="24sp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonsLinearLayout"
         app:layout_constraintEnd_toEndOf="@+id/startline_title"
         app:layout_constraintStart_toStartOf="@+id/startline_title"
         app:layout_constraintTop_toBottomOf="@+id/startline_title" />
@@ -60,51 +61,55 @@
         android:layout_marginTop="8dp"
         android:text="0"
         android:textSize="24sp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonsLinearLayout"
         app:layout_constraintEnd_toEndOf="@+id/funline_title"
         app:layout_constraintStart_toStartOf="@+id/funline_title"
         app:layout_constraintTop_toBottomOf="@+id/funline_title" />
 
-    <Button
-        android:id="@+id/start_button"
+    <LinearLayout
+        android:id="@+id/buttonsLinearLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:text="@string/start_button_text"
-        app:layout_constraintBottom_toTopOf="@+id/stop_button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/startline_status" />
-
-    <Button
-        android:id="@+id/stop_button"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="16dp"
-        android:text="@string/stop_button_text"
-        app:layout_constraintBottom_toTopOf="@+id/time_limit_button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/start_button" />
-
-    <Button
-        android:id="@+id/time_limit_button"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="16dp"
-        android:text="@string/set_time_limit_text"
+        android:layout_marginBottom="4dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:weightSum="3"
         app:layout_constraintBottom_toTopOf="@+id/current_timebox"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/stop_button" />
+        app:layout_constraintTop_toBottomOf="@+id/startline_status">
+
+        <Button
+            android:id="@+id/start_button"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:text="@string/start_button_text" />
+
+        <Button
+            android:id="@+id/stop_button"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:text="@string/stop_button_text" />
+
+        <Button
+            android:id="@+id/time_limit_button"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="0dp"
+            android:layout_weight="1"
+            android:text="@string/set_time_limit_text" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/current_timebox"
@@ -115,7 +120,7 @@
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/time_limit_button" />
+        app:layout_constraintTop_toBottomOf="@+id/buttonsLinearLayout" />
 
     <TextView
         android:id="@+id/working_until_text"
