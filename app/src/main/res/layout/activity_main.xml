@@ -134,43 +134,52 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:ems="10"
         android:hint="@string/task_name_edit_text_hint"
         android:inputType="text"
         android:minHeight="48dp"
         android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/working_until_text" />
 
-    <Switch
-        android:id="@+id/fun_mode_switch"
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="32dp"
-        android:checked="false"
-        android:minHeight="48dp"
-        android:text="@string/fun_mode_switch_text"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/task_name"
-        tools:ignore="UseSwitchCompatOrMaterialXml" />
+        app:layout_constraintTop_toBottomOf="@+id/task_name">
 
-    <Switch
-        android:id="@+id/music_mode_switch"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="32dp"
-        android:checked="true"
-        android:minHeight="48dp"
-        android:text="@string/music_mode_switch_text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/fun_mode_switch"
-        tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <Switch
+            android:id="@+id/fun_mode_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="0dp"
+            android:checked="false"
+            android:minHeight="48dp"
+            android:text="@string/fun_mode_switch_text"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+        <Switch
+            android:id="@+id/music_mode_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="0dp"
+            android:checked="true"
+            android:minHeight="48dp"
+            android:text="@string/music_mode_switch_text"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
