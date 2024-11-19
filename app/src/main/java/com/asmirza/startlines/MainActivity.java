@@ -32,6 +32,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -258,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
 
             TextView startlineStatusTextView = findViewById(R.id.startline_status);
             TextView funlineStatusTextView = findViewById(R.id.funline_status);
-            TextView taskNameTextView = findViewById(R.id.task_name);
+            TextInputEditText taskNameTextView = findViewById(R.id.task_name);
             Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
             Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
 
@@ -278,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
         /* Get and Save Startlines, Funline, and Task Name */
         TextView startlineStatusTextView = findViewById(R.id.startline_status);
         TextView funlineStatusTextView = findViewById(R.id.funline_status);
-        EditText taskNameTextView = findViewById(R.id.task_name);
+        TextInputEditText taskNameTextView = findViewById(R.id.task_name);
         Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
         Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
 
@@ -348,7 +351,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void addTextChangeListener() {
-        EditText taskNameEditText = findViewById(R.id.task_name);
+        TextInputEditText taskNameEditText = findViewById(R.id.task_name);
         taskNameEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}

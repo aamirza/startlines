@@ -134,21 +134,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/current_timebox" />
 
-    <EditText
-        android:id="@+id/task_name"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/task_add_icon"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:ems="10"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:hint="@string/task_name_edit_text_hint"
-        android:inputType="text"
-        android:minHeight="48dp"
-        android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switchesLinearLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/switchesLinearLayout"
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/baseline_add_24"
+        app:endIconContentDescription="Save Task"
+        >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/task_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:importantForAutofill="no" />
+    </com.google.android.material.textfield.TextInputLayout>
+
 
     <LinearLayout
         android:id="@+id/switchesLinearLayout"
@@ -186,5 +196,20 @@
             android:text="@string/music_mode_switch_text"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
     </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/todo_recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="64dp"
+        android:scrollbars="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/task_add_icon"
+        tools:listitem="@layout/task_item" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
