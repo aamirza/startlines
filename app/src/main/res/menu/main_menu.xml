@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/snooze_startlines"
+        android:title="@string/snooze_menu_text"
+        android:orderInCategory="30"
+        app:showAsAction="never" />
+
     <item
         android:id="@+id/manage_blocked_apps"
         android:title="@string/manage_blocked_apps_button_text"
@@ -22,5 +29,7 @@
     <item
         android:id="@+id/ip_port_settings"
         android:title="@string/ip_and_port_settings_menu_button"
-        app:showAsAction="never" />
+        app:showAsAction="never"
+        android:orderInCategory="50"
+        />
 </menu>

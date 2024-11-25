@@ -4,6 +4,8 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.AlarmManager;
 import android.app.AlertDialog;
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean workingStatus = false;  // 0 if timebox is not running, 1 if timebox is running
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
+    private Runnable startlineSnoozer; // will be used to snooze startlines
     private long timeLimitInMillis = Long.MAX_VALUE;  // used when setting a time limit
     private Vibrator vibrator;
     private MediaPlayer tickingMediaPlayer;  // will be used for playing the ticking sound
@@ -154,6 +157,10 @@ public class MainActivity extends AppCompatActivity {
             return true;
         } else if (item.getItemId() == R.id.ip_port_settings) {
             openIPSettingsDialog();
+            return true;
+        } else if (item.getItemId() == R.id.snooze_startlines) {
+            snooze();
+            Log.d("MainActivity", "Snooze Startlines button pressed");
             return true;
         }
 
@@ -520,6 +527,20 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
             Log.w("Timebox", "Timebox is not running. Nothing to stop.");
         }
+    }
+
+    public void snooze() {
+        if (getStartlineStatus() == "X") {
+            startlineSnoozer = () -> {
+                setStartlineStatus("1");
+            };
+        } else if (getFunlineStatus() == "X") {
+            startlineSnoozer = () -> {
+                setFunlineStatus("1");
+            };
+        }
+        long twoMinutes = 2 * 60 * 1000;
+        handler.postDelayed(startlineSnoozer, twoMinutes);
     }
 
     private void switchMusicModeToOn() {
