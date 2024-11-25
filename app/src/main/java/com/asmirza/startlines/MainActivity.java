@@ -50,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer tickingMediaPlayer;  // will be used for playing the ticking sound
     private int startlinesMissed = 0;  // how many times you missed a startline, will be used to determine whether to block apps or not
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
+    private TaskAdapter taskAdapter;
+    private List<Task> taskList = new ArrayList<>();
+    private TextInputEditText taskInput;
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
     private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
     private static final int MIDNIGHT_ALARM_REQUEST_CODE = 2000;
@@ -86,8 +89,36 @@ public class MainActivity extends AppCompatActivity {
         scheduleStartlines();
         scheduleMidnightAlarm();
         setupBackPressHandler();
+        setupTaskList();
         StartlinesManager.sendStartlineMessageToServer(this);
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
+    }
+
+    private void setupTaskList() {
+        taskInput = findViewById(R.id.task_name);
+        RecyclerView taskRecyclerView = findViewById(R.id.todo_recycler_view);
+        taskAdapter = new TaskAdapter(taskList);
+        taskRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        taskRecyclerView.setAdapter(taskAdapter);
+
+        TextInputLayout taskInputLayout = findViewById(R.id.task_add_icon);
+        taskInputLayout.setEndIconOnClickListener(v -> {
+            addTask();
+        });
+    }
+
+    private void addTask() {
+        TextInputLayout taskInputLayout = findViewById(R.id.task_add_icon);
+        String taskName = taskInput.getText().toString().trim();
+
+        if (!taskName.isEmpty()) {
+            taskList.add(new Task(taskName));
+            taskAdapter.notifyItemInserted(taskList.size() - 1);
+            taskInput.setText("");
+        } else {
+            taskInputLayout.setError("Task name cannot be empty");
+            taskInputLayout.postDelayed(() -> taskInputLayout.setError(null), 2000);
+        }
     }
 
     @Override
