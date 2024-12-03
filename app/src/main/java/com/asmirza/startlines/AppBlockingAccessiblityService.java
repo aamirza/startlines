@@ -8,9 +8,9 @@ import android.view.accessibility.AccessibilityEvent;
 public class AppBlockingAccessiblityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        Log.d("AppBlockingAccessiblityService", "Accessibility event received");
+        Log.v("AppBlockingAccessiblityService", "Accessibility event received");
         String packageName = event.getPackageName().toString();
-        Log.d("AppBlockingAccessiblityService", "Package name: " + packageName);
+        Log.v("AppBlockingAccessiblityService", "Package name: " + packageName);
         StartlinesManager.blockAppIfNecessary(this, packageName);
     }
 

@@ -21,13 +21,15 @@ import java.util.List;
 public class StartlineService extends Service {
     private static final String CHANNEL_ID = "startline_channel";
 
+    private static final int NOTIFICATION_ID = 1;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Let it continue running until it is stopped.
         Log.d("StartlineService", "Startline service entered");
         createNotificationChannel();
         // TODO: Fix this for Android SDK 34+ (Android 14+)
-        startForeground(1, getNotification());
+        startForeground(NOTIFICATION_ID, getNotification());
         Log.d("StartlineService", "Startline foreground service started");
 
         if (intent != null) {

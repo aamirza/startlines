@@ -1,18 +1,24 @@
 package com.asmirza.startlines;
 
+import static com.asmirza.startlines.NotificationHelper.NOTIFICATION_PERMISSION_REQUEST_CODE;
+
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -89,12 +95,15 @@ public class MainActivity extends AppCompatActivity {
         if (!isAccessibilityServiceEnabled()) {
             showAccessibilityServiceDialog();
         }
+        checkNotificationPermission();
+        NotificationHelper.createNotificationChannel(this);
         scheduleStartlines();
         scheduleMidnightAlarm();
         setupBackPressHandler();
         setupTaskList();
         StartlinesManager.sendStartlineMessageToServer(this);
-        //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
+        NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
+        scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
 
     private void setupTaskList() {
@@ -166,6 +175,45 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    private void checkNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST_CODE);
+            } else {
+                // Permission already granted
+                Log.d("Notification", "Notification permission already granted");
+                NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
+            }
+        } else {
+            // No need to check for permission
+            Log.d("Notification", "Notification permission not needed");
+            NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
+        }
+    }
+
+    private void updatePermanentNotification() {
+        NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted
+                Log.d("Notification", "Notification permission granted");
+            } else {
+                // Permission denied
+                Log.d("Notification", "Notification permission denied");
+            }
+        }
+    }
+
 
     private void funModeSwitchListener() {
         Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
@@ -252,20 +300,77 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         /* This will execute when the StartlineCheckerReceiver sends an intent to this activity */
+        // Also used for notification action buttons
 
+        Log.d("MainActivity", "onNewIntent called");
 
         super.onNewIntent(intent);
         setIntent(intent); // Important: update the activity's intent
-        Log.d("MainActivity", "onNewIntent called with intent: " + intent.getStringExtra("lineType"));
+        String action = intent.getAction();
 
-        String lineType = intent.getStringExtra("lineType");
+        if (action != null) {
+            switch (action) {
+                case "ACTION_START_STARTLINE_TIMER":
+                    Log.d("MainActivity", "Start Startline Timer notification button pressed");
+                    if (!isWorking()) {
+                        switchFunModeToOn(false);
+                        startTimebox();
+                    } else {
+                        Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
+                        Log.w("MainActivity", "Timebox already running, not starting a new one");
+                    }
+                    break;
+                case "ACTION_START_FUNLINE_TIMER":
+                    Log.d("MainActivity", "Start Funline Timer notification button pressed");
+                    if (!isWorking()) {
+                        switchFunModeToOn(true);
+                        startTimebox();
+                    } else {
+                        Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
+                        Log.w("MainActivity", "Timebox already running, not starting a new one");
+                    }
+                    break;
+                case "ACTION_START_TIMER":
+                    Log.d("MainActivity", "Start Timer notification button pressed");
+                    if (!isWorking()) {
+                        if (getStartlineStatus() == "X") {
+                            switchFunModeToOn(false);
+                            startTimebox();
+                        } else if (getFunlineStatus() == "X") {
+                            switchFunModeToOn(true);
+                            startTimebox();
+                        } else {
+                            Toast.makeText(this, "Neither Startline or Funline are X'd. Timer not started.", Toast.LENGTH_SHORT).show();
+                            Log.w("MainActivity", "Neither Startline or Funline are X'd. Timer not started.");
+                        }
+                    } else {
+                        Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
+                        Log.w("MainActivity", "Timebox already running, not starting a new one");
+                    }
+                    break;
+                case "ACTION_STOP_TIMER":
+                    Log.d("MainActivity", "Stop Timer notification button pressed");
+                    stopTimebox();
+                    break;
+                case "ACTION_SNOOZE":
+                    Log.d("MainActivity", "Snooze button pressed");
+                    if (!isWorking()) {
+                        snooze();
+                    }
+                    break;
+            }
+        } else {
+            Log.d("MainActivity", "onNewIntent called with intent: " + intent.getStringExtra("lineType"));
 
-        if (lineType != null) {
-            if (lineType.equals("midnight")) {
-                scheduleStartlines();
-            } else {
-                Log.d("onNewIntent", "executing lineType: " + lineType);
-                executeStartline(lineType);
+            String lineType = intent.getStringExtra("lineType");
+
+            if (lineType != null) {
+                if (lineType.equals("midnight")) {
+                    scheduleStartlines();
+                } else {
+                    Log.d("onNewIntent", "executing lineType: " + lineType);
+                    executeStartline(lineType);
+                }
             }
         }
     }
@@ -487,6 +592,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         String endTimeFormatted = timestampToText(endTimeInMillis);
+        NotificationHelper.showTimerNotification(this, currentTimeboxDuration, endTimeFormatted, !isFunModeOn());
 
         if (timeLimitInMillis == Long.MAX_VALUE) {
             // If there is no time limit set, play the ticking sound
@@ -522,6 +628,8 @@ public class MainActivity extends AppCompatActivity {
             setWorkingStatusToFalse();
             StartlinesManager.sendStartlineMessageToServer(this);
             switchMusicModeToOn();
+            updatePermanentNotification();
+            NotificationHelper.cancelTimerNotification(this);
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
@@ -548,6 +656,14 @@ public class MainActivity extends AppCompatActivity {
         if (!musicModeSwitch.isChecked()) {
             musicModeSwitch.setChecked(true);
         }
+    }
+
+    private void switchFunModeToOn(boolean funMode) {
+        Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
+        if (!funModeSwitch.isChecked()) {
+            funModeSwitch.setChecked(funMode);
+        }
+
     }
 
     private void vibrateOnStop() {
@@ -659,10 +775,12 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "Startline set to 1 after timebox completion");
         }
         resetStartlinesMissed();
+        NotificationHelper.cancelXModeNotification(this);
     }
 
     public void executeStartline(String lineType) {
         /* Checks Startline status and sets it accordingly */
+        Log.d("MainActivity", "Executing Startline: " + lineType);
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         String status = prefs.getString(lineType + "Status", "0");
 
@@ -670,6 +788,9 @@ public class MainActivity extends AppCompatActivity {
             setLineStatus(lineType, "X");
             incrementStartlinesMissed();
             scheduleStartlineChecker(5, lineType);
+            if (!isWorking()) {
+                NotificationHelper.showXModeNotification(this, lineType.equalsIgnoreCase("startline"));
+            }
         } else if (status.equals("1")) {
             setLineStatus(lineType, "0");
             resetStartlinesMissed();
@@ -689,6 +810,7 @@ public class MainActivity extends AppCompatActivity {
         long interval = (long) intervalInMinutes * 60 * 1000;  // in milliseconds
         long triggerAtMillis = System.currentTimeMillis() + interval;
 
+        Log.d("Scheduler", "Alarm scheduled for: " + lineType + " at " + triggerAtMillis);
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
         Log.d("Scheduler", "Startline Checker scheduled for " + lineType + " in " + intervalInMinutes + " minutes");
     }

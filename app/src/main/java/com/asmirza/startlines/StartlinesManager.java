@@ -112,10 +112,10 @@ public class StartlinesManager {
     /*********************** Querying the state of startlines ************************/
 
     public static boolean isTimeboxRunning(Context context) {
-        Log.d("StartlinesManager", "Checking if timebox is running");
+        Log.v("StartlinesManager", "Checking if timebox is running");
         SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         boolean timeboxRunning = prefs.getBoolean("workingStatus", false);
-        Log.d("StartlinesManager", "Timebox running: " + timeboxRunning);
+        Log.v("StartlinesManager", "Timebox running: " + timeboxRunning);
         return timeboxRunning;
     }
 
@@ -318,7 +318,7 @@ public class StartlinesManager {
     }
 
     public static Set<String> getBlockedApps(Context context) {
-        Log.d("StartlinesManager", "Getting blocked apps");
+        Log.v("StartlinesManager", "Getting blocked apps");
         SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         return sharedPreferences.getStringSet("blockedApps", new HashSet<>());
     }
@@ -330,10 +330,10 @@ public class StartlinesManager {
     }
 
     public static boolean isAppBlocked(Context context, String packageName) {
-        Log.d("StartlinesManager", "Checking if app is blocked: " + packageName);
+        Log.v("StartlinesManager", "Checking if app is blocked: " + packageName);
         Set<String> blockedApps = getBlockedApps(context);
         boolean isAppBlocked = blockedApps.contains(packageName);
-        Log.d("StartlinesManager", "App is blocked: " + isAppBlocked);
+        Log.v("StartlinesManager", "App is blocked: " + isAppBlocked);
         return isAppBlocked;
     }
 
