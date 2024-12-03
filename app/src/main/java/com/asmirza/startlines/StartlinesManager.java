@@ -273,6 +273,7 @@ public class StartlinesManager {
             if (isAppBlockingModeOn(context) && !isTimeboxRunning(context)) {
                 openStartlinesApp(context);
                 startVibrationLoop(context);
+                NotificationHelper.showXModeNotification(context, getStartlineStatus(context).equals("X"));
             }
             scheduleStartlineChecker(context,5, lineType);
         } else if (status.equals("1")) {
@@ -348,6 +349,7 @@ public class StartlinesManager {
     public static void blockApp(Context context, String packageName) {
         Log.d("StartlinesManager", "Conditions for blocking app met: " + packageName);
         openStartlinesApp(context);
+        NotificationHelper.showXModeNotification(context, getStartlineStatus(context).equals("X"));
     }
 
     public static void blockDistractingApp(Context context, String packageName) {
