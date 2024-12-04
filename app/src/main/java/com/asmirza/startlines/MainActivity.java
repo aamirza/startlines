@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private Vibrator vibrator;
     private MediaPlayer tickingMediaPlayer;  // will be used for playing the ticking sound
     private int startlinesMissed = 0;  // how many times you missed a startline, will be used to determine whether to block apps or not
+    private int timesStopButtonPressed = 0;  // for two presses to truly stop the timebox
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private TaskAdapter taskAdapter;
     private List<Task> taskList = new ArrayList<>();
@@ -247,7 +248,13 @@ public class MainActivity extends AppCompatActivity {
 
         stopButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Stop button pressed");
-            stopTimebox();
+            if (timesStopButtonPressed == 0) {
+                timesStopButtonPressed++;
+                showStopButtonAdviceDialogue();
+            } else {
+                timesStopButtonPressed = 0;
+                stopTimebox();
+            }
         });
     }
 
@@ -630,6 +637,7 @@ public class MainActivity extends AppCompatActivity {
             switchMusicModeToOn();
             updatePermanentNotification();
             NotificationHelper.cancelTimerNotification(this);
+            timesStopButtonPressed = 0;
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
@@ -957,6 +965,21 @@ public class MainActivity extends AppCompatActivity {
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
+        builder.show();
+    }
+
+    private void showStopButtonAdviceDialogue() {
+        // Create an AlertDialog for what you should do before the timebox ends
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Stop Button Info");
+        builder.setMessage("Until the timebox ends, try to do the following housekeeping tasks:\n\n" +
+                "* Start a new Freedom session.\n" +
+                "* Check Todoist\n" +
+                "* Check your calendar\n" +
+                "* Try to organize at least 1 or 2 Evernote notes\n" +
+                "* Listen to a podcast for at least 2 minutes\n" +
+                "* Note any distractions you had this timebox session\n");
+        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 
