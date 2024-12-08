@@ -98,6 +98,8 @@ public class AppBlockingActivity extends AppCompatActivity {
             editor.putStringSet("distractingApps", selectedAppPackageNames);
         } else if (blockType.equals("MUSIC_APPS")) {
             editor.putStringSet("musicApps", selectedAppPackageNames);
+        } else if (blockType.equals("CALENDAR_APP")) {
+            editor.putStringSet("calendarApp", selectedAppPackageNames);
         }
 
         editor.apply();
@@ -111,6 +113,8 @@ public class AppBlockingActivity extends AppCompatActivity {
             return prefs.getStringSet("distractingApps", new HashSet<>());
         } else if (blockType.equals("MUSIC_APPS")) {
             return prefs.getStringSet("musicApps", new HashSet<>());
+        } else if (blockType.equals("CALENDAR_APP")) {
+            return prefs.getStringSet("calendarApp", new HashSet<>());
         }
 
         return prefs.getStringSet("blockedApps", new HashSet<>());

@@ -27,6 +27,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/select_calendar_app"
+        android:title="@string/menu_select_calendar_app"
+        android:orderInCategory="110"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/ip_port_settings"
         android:title="@string/ip_and_port_settings_menu_button"
         app:showAsAction="never"

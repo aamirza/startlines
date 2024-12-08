@@ -173,6 +173,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             intent.putExtra("blockType", "MUSIC_APPS");
             startActivity(intent);
             return true;
+        } else if (id == R.id.select_calendar_app) {
+            Log.d("MainActivity", "Select calendar app button pressed");
+            Intent intent = new Intent(this, AppBlockingActivity.class);
+            intent.putExtra("blockType", "CALENDAR_APP");
+            startActivity(intent);
+            return true;
         } else if (item.getItemId() == R.id.ip_port_settings) {
             openIPSettingsDialog();
             return true;

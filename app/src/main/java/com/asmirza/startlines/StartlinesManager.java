@@ -271,7 +271,7 @@ public class StartlinesManager {
             incrementStartlinesMissed(context);
             sendStartlineMessageToServer(context);
             if (isAppBlockingModeOn(context) && !isTimeboxRunning(context)) {
-                openStartlinesApp(context);
+                openCalendarApp(context);
                 startVibrationLoop(context);
                 NotificationHelper.showXModeNotification(context, getStartlineStatus(context).equals("X"));
             }
@@ -348,19 +348,37 @@ public class StartlinesManager {
 
     public static void blockApp(Context context, String packageName) {
         Log.d("StartlinesManager", "Conditions for blocking app met: " + packageName);
-        openStartlinesApp(context);
+        openCalendarApp(context);
         NotificationHelper.showXModeNotification(context, getStartlineStatus(context).equals("X"));
     }
 
     public static void blockDistractingApp(Context context, String packageName) {
         Log.d("StartlinesManager", "Conditions for blocking distracting app met: " + packageName);
-        openStartlinesApp(context);
+        openCalendarApp(context);
     }
 
     public static void openStartlinesApp(Context context) {
         Intent intent = new Intent(context, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
+    }
+
+    public static void openCalendarApp(Context context) {
+        Set<String> calendarApp = getCalendarApp(context);
+        if (calendarApp.isEmpty()) {
+            Log.d("StartlinesManager", "No calendar app selected");
+            return;
+        }
+
+        List<String> calendarAppList = new ArrayList<>(calendarApp);
+        int randomIndex = (int) (Math.random() * calendarAppList.size());
+        String randomCalendarApp = calendarAppList.get(randomIndex);
+
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(randomCalendarApp);
+        if (launchIntent != null) {
+            Log.d("StartlinesManager", "Opening calendar app: " + randomCalendarApp);
+            context.startActivity(launchIntent);
+        }
     }
 
     public static void blockAppIfNecessary(Context context, String packageName) {
@@ -392,6 +410,13 @@ public class StartlinesManager {
         SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         Set<String> musicApps = sharedPreferences.getStringSet("musicApps", new HashSet<>());
         return musicApps;
+    }
+
+    public static Set<String> getCalendarApp(Context context) {
+        Log.d("StartlinesManager", "Getting calendar apps");
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        Set<String> calendarApp = sharedPreferences.getStringSet("calendarApp", new HashSet<>());
+        return calendarApp;
     }
 
     public static void openRandomMusicApp(Context context) {
