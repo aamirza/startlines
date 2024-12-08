@@ -46,10 +46,12 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskAdapterCallback {
     private boolean workingStatus = false;  // 0 if timebox is not running, 1 if timebox is running
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
@@ -102,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         scheduleMidnightAlarm();
         setupBackPressHandler();
         setupTaskList();
+        loadTasks();
         StartlinesManager.sendStartlineMessageToServer(this);
         NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
         scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
@@ -110,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupTaskList() {
         taskInput = findViewById(R.id.task_name);
         RecyclerView taskRecyclerView = findViewById(R.id.todo_recycler_view);
-        taskAdapter = new TaskAdapter(taskList);
+        taskAdapter = new TaskAdapter(taskList, this);
         taskRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         taskRecyclerView.setAdapter(taskAdapter);
 
@@ -128,10 +131,15 @@ public class MainActivity extends AppCompatActivity {
             taskList.add(new Task(taskName));
             taskAdapter.notifyItemInserted(taskList.size() - 1);
             taskInput.setText("");
+            saveTasks();
         } else {
             taskInputLayout.setError("Task name cannot be empty");
             taskInputLayout.postDelayed(() -> taskInputLayout.setError(null), 2000);
         }
+    }
+
+    public void onTaskListUpdated(List<Task> updatedTaskList) {
+        saveTasks();
     }
 
     @Override
@@ -382,7 +390,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode, boolean musicMode) {
+    public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode, boolean musicMode, Set<String> tasks) {
         /* Save Startlines, Funline, and Task Name in case of reboot or app close */
         SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -393,6 +401,7 @@ public class MainActivity extends AppCompatActivity {
         editor.putBoolean("funMode", funMode);
         editor.putInt("startlinesMissed", startlinesMissed);
         editor.putBoolean("musicMode", musicMode);
+        editor.putStringSet("tasks", tasks);
 
         editor.apply(); // Saves changes asynchronously
     }
@@ -422,9 +431,52 @@ public class MainActivity extends AppCompatActivity {
             funModeSwitch.setChecked(funMode);
             musicModeSwitch.setChecked(musicMode);
         } catch (Exception e) {
-            saveStatuses("0", "0", "", false, true);
+            saveStatuses("0", "0", "", false, true, new HashSet<>());
             loadStatuses();
         }
+    }
+
+    private Set<String> getTasksAsSet() {
+        Set<String> taskSet = new HashSet<>();
+
+        for (Task task : taskList) {
+            taskSet.add(task.getName());
+        }
+
+        return taskSet;
+    }
+
+    private void loadTasks() {
+        Log.d("MainActivity", "Loading tasks from SharedPreferences");
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        Set<String> tasks = sharedPreferences.getStringSet("tasks", null);
+
+        if (tasks != null) {
+            taskList.clear();
+            for (String task : tasks) {
+                taskList.add(new Task(task));
+            }
+
+            taskAdapter.notifyDataSetChanged();
+            Log.d("MainActivity", "Tasks loaded from a StringSet");
+        } else {
+            Log.d("MainActivity", "No tasks found in SharedPreferences");
+        }
+    }
+
+    private void saveTasks() {
+        Log.d("MainActivity", "Saving tasks to SharedPreferences");
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        Set<String> taskSet = new HashSet<>();
+        for (Task task : taskList) {
+            taskSet.add(task.getName());
+        }
+
+        editor.putStringSet("tasks", taskSet);
+        editor.apply();
+        Log.d("MainActivity", "Tasks saved to SharedPreferences");
     }
 
     public void getAndSaveStatuses() {
@@ -435,13 +487,15 @@ public class MainActivity extends AppCompatActivity {
         Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
         Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
 
+
         String startlineStatus = startlineStatusTextView.getText().toString();
         String funlineStatus = funlineStatusTextView.getText().toString();
         String taskName = taskNameTextView.getText().toString();
         boolean funMode = funModeSwitch.isChecked();
         boolean musicMode = musicModeSwitch.isChecked();
+        Set<String> taskSet = getTasksAsSet();
 
-        saveStatuses(startlineStatus, funlineStatus, taskName, funMode, musicMode);
+        saveStatuses(startlineStatus, funlineStatus, taskName, funMode, musicMode, taskSet);
     }
 
     private void saveWorkingStatus() {

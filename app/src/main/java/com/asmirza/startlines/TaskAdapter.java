@@ -12,9 +12,11 @@ import java.util.List;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
     private List<Task> taskList;
+    private TaskAdapterCallback callback;
 
-    public TaskAdapter(List<Task> tasks) {
+    public TaskAdapter(List<Task> tasks, TaskAdapterCallback callback) {
         this.taskList = tasks;
+        this.callback = callback;
     }
 
     @NonNull
@@ -35,6 +37,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                 taskList.remove(task);
                 notifyItemRemoved(position);
                 notifyItemChanged(position, taskList.size());
+
+                if (callback != null) {
+                    callback.onTaskListUpdated(taskList);
+                }
             }
         });
     }
@@ -51,6 +57,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             super(itemView);
             taskCheckbox = itemView.findViewById(R.id.task_checkbox);
         }
+    }
+
+    public interface TaskAdapterCallback {
+        void onTaskListUpdated(List<Task> updatedTaskList);
     }
 
 }
