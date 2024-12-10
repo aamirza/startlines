@@ -45,9 +45,20 @@ public class NotificationHelper {
         }
     }
 
+    private static PendingIntent getOpenAppPendingIntent(Context context) {
+        Intent openAppIntent = new Intent(context, MainActivity.class);
+        return PendingIntent.getActivity(
+                context,
+                0,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+    }
+
     public static void showPermanentNotification(Context context, String startlineStatus, String funlineStatus) {
         /*  A permanent notification with the status of Startline and Funline, where the user can
         **  press "Start Startline Timer" or "Start Funline Timer" as action buttons. */
+        PendingIntent openAppPendingIntent = getOpenAppPendingIntent(context);
         Intent startStartlineIntent = new Intent(context, MainActivity.class);
         startStartlineIntent.setAction("ACTION_START_STARTLINE_TIMER");
         PendingIntent startStartlinePendingIntent = PendingIntent.getActivity(
@@ -71,6 +82,7 @@ public class NotificationHelper {
                 .setContentTitle("Startlines Status")
                 .setContentText("Startline: " + startlineStatus + ", Funline: " + funlineStatus)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(openAppPendingIntent)
                 .addAction(R.drawable.ic_launcher_foreground, "Start Startline Timer", startStartlinePendingIntent)
                 .addAction(R.drawable.ic_launcher_foreground, "Start Funline Timer", startFunlinePendingIntent)
                 .extend(new NotificationCompat.WearableExtender());
@@ -91,7 +103,7 @@ public class NotificationHelper {
         // Example for X Mode
         /* When Startline or Funline hit X mode and no timer is running, another different
         ** notification is sent. This has a "Start" and "Snooze" button. */
-
+        PendingIntent openAppPendingIntent = getOpenAppPendingIntent(context);
         Intent startIntent = new Intent(context, MainActivity.class);
         startIntent.setAction("ACTION_START_TIMER");
         PendingIntent startPendingIntent = PendingIntent.getActivity(
@@ -115,6 +127,7 @@ public class NotificationHelper {
                 .setContentTitle("Startline in X Mode")
                 .setContentText("Startline or Funline needs your attention!")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(openAppPendingIntent)
                 .addAction(R.drawable.ic_launcher_foreground, "Start", startPendingIntent)
                 .addAction(R.drawable.ic_launcher_foreground, "Snooze", snoozePendingIntent);
 
