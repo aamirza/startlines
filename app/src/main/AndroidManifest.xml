@@ -7,9 +7,15 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
-
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -21,6 +27,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Startlines"
         tools:targetApi="31">
+        <activity
+            android:name=".TimeboxListActivity"
+            android:exported="false" />
         <activity
             android:name=".AppBlockingActivity"
             android:exported="false" />
@@ -38,8 +47,8 @@
         <service
             android:name=".StartlineService"
             android:enabled="true"
-            android:exported="false" />
-
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
         <service
             android:name=".AppBlockingAccessiblityService"
             android:enabled="true"
