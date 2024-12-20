@@ -21,4 +21,5 @@
     <string name="ip_and_port_settings_menu_button">IP and Port Settings</string>
     <string name="snooze_menu_text">Snooze</string>
     <string name="menu_select_calendar_app">Select Calendar App</string>
+    <string name="manage_timeboxes_menu_text">Manage Timeboxes</string>
 </resources>

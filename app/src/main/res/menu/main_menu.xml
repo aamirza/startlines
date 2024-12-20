@@ -9,6 +9,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/manage_timeboxes"
+        android:title="@string/manage_timeboxes_menu_text"
+        android:orderInCategory="40"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/manage_blocked_apps"
         android:title="@string/manage_blocked_apps_button_text"
         android:orderInCategory="100"

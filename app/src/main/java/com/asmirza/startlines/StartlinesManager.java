@@ -18,6 +18,11 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.view.KeyEvent;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -471,5 +476,40 @@ public class StartlinesManager {
     public static void sendStartlineMessageToServer(Context context) {
         Log.d("MainActivity", "Sending status message to server");
         SocketClient.sendMessageToServer(createStatusMessage(context), getIpAddress(context), getPort(context));
+    }
+
+    /*********************** Timebox related code ************************/
+
+    public static List<Timebox> loadTimeboxes(Context context, boolean includeIncomplete) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString("timeboxes", "[]");
+        Type type = new TypeToken<ArrayList<Timebox>>() {}.getType();
+        Log.d("StartlinesManager", "Timeboxes loaded from SharedPreferences in StartlinesManager");
+        List<Timebox> timeboxes = gson.fromJson(json, type);
+
+        if (!includeIncomplete) {
+            List<Timebox> completeTimeboxes = new ArrayList<>();
+            for (Timebox timebox : timeboxes) {
+                if (timebox.isComplete()) {
+                    completeTimeboxes.add(timebox);
+                }
+            }
+            return completeTimeboxes;
+        } else {
+            return timeboxes;
+        }
+    }
+
+    public static void saveTimeboxes(Context context, List<Timebox> timeboxList) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        Gson gson = new Gson();
+        String json = gson.toJson(timeboxList);
+        editor.putString("timeboxes", json);
+        editor.apply();
+
+        Log.d("Timebox", "Timeboxes saved to SharedPreferences");
     }
 }

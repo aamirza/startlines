@@ -42,7 +42,10 @@ import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -64,6 +67,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     private List<PendingIntent> alarmPendingIntents = new ArrayList<>();
     private TaskAdapter taskAdapter;
     private List<Task> taskList = new ArrayList<>();
+    private List<Timebox> timeboxList = new ArrayList<>();
+    private Timebox currentTimebox;
     private TextInputEditText taskInput;
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
     private static final int FUNLINE_ALARM_REQUEST_CODE = 1;
@@ -105,6 +110,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         setupBackPressHandler();
         setupTaskList();
         loadTasks();
+        loadTimeboxes();
+        updateComplianceScore();
         StartlinesManager.sendStartlineMessageToServer(this);
         NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
         scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
@@ -185,6 +192,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.snooze_startlines) {
             snooze();
             Log.d("MainActivity", "Snooze Startlines button pressed");
+            return true;
+        } else if (item.getItemId() == R.id.manage_timeboxes) {
+            Intent intent = new Intent(this, TimeboxListActivity.class);
+            startActivity(intent);
             return true;
         }
 
@@ -293,6 +304,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     protected void onResume() {
         Log.d("ApplifeCycle", "App is resumed, back in foreground");
         loadStatuses();
+        updateComplianceScore();
         super.onResume();
     }
 
@@ -511,6 +523,166 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         editor.apply();
     }
 
+    private void createTimebox(long startTime) {
+        currentTimebox = new Timebox(startTime, startTime, false);
+        timeboxList.add(currentTimebox);
+        saveTimeboxes();
+        Log.d("Timebox", "Timebox created at " + timestampToText(startTime));
+    }
+
+    private void updateTimebox() {
+        if (currentTimebox != null) {
+            currentTimebox.setEndTime(System.currentTimeMillis());
+            saveTimeboxes();
+            Log.d("Timebox", "Timebox updated with end time " + timestampToText(currentTimebox.getEndTime()));
+        } else {
+            Log.w("Timebox", "No timebox to update");
+        }
+    }
+
+    private void clearTimebox() {
+        if (currentTimebox != null) {
+            updateTimebox();
+            currentTimebox = null;
+            saveTimeboxes();
+            Log.d("Timebox", "Timebox cleared");
+        } else {
+            Log.w("Timebox", "No timebox to clear");
+        }
+    }
+
+    private void saveTimeboxes() {
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        Gson gson = new Gson();
+        String json = gson.toJson(timeboxList);
+        editor.putString("timeboxes", json);
+        editor.apply();
+
+        Log.d("Timebox", "Timeboxes saved to SharedPreferences");
+    }
+
+    private void loadTimeboxes() {
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString("timeboxes", "[]");
+        Type type = new TypeToken<ArrayList<Timebox>>() {}.getType();
+        timeboxList = gson.fromJson(json, type);
+
+        Log.d("Timebox", "Timeboxes loaded from SharedPreferences");
+    }
+
+    private void deleteOldTimeboxes() {
+        // Get the start-of-day timestamp
+        Calendar startOfDay = Calendar.getInstance();
+        startOfDay.set(Calendar.HOUR_OF_DAY, 0);
+        startOfDay.set(Calendar.MINUTE, 0);
+        startOfDay.set(Calendar.SECOND, 0);
+        startOfDay.set(Calendar.MILLISECOND, 0);
+        long startOfDayTimestamp = startOfDay.getTimeInMillis();
+
+        // Filter the list to remove timeboxes not from today
+        List<Timebox> updatedTimeboxList = new ArrayList<>();
+        for (Timebox timebox : timeboxList) {
+            if (timebox.getEndTime() >= startOfDayTimestamp) {
+                updatedTimeboxList.add(timebox);
+            }
+        }
+
+        if (updatedTimeboxList.size() == timeboxList.size()) {
+            Log.d("TimeboxManager", "No old timeboxes to delete");
+            return;
+        }
+
+        // Update the timebox list
+        timeboxList.clear();
+        timeboxList.addAll(updatedTimeboxList);
+
+        // Save the updated list to SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(timeboxList);
+        editor.putString("timeboxes", json);
+        editor.apply();
+
+        Log.d("TimeboxManager", "Old timeboxes deleted, list updated.");
+    }
+
+    public int getCompliantMinutes(boolean includeCurrentTimebox) {
+        int compliantMinutes = 0;
+        for (Timebox timebox : timeboxList) {
+            if (timebox.isScheduleCompliant()) {
+                compliantMinutes += timebox.getDuration();
+            }
+        }
+
+        if (includeCurrentTimebox && currentTimebox != null) {
+            compliantMinutes += currentTimebox.getDuration();
+        }
+
+        return compliantMinutes;
+    }
+
+    private int getTimeElapsedInDay() {
+        long currentTime = System.currentTimeMillis();
+        Calendar startOfDay = Calendar.getInstance();
+        startOfDay.set(Calendar.HOUR_OF_DAY, 0);
+        startOfDay.set(Calendar.MINUTE, 0);
+        startOfDay.set(Calendar.SECOND, 0);
+        startOfDay.set(Calendar.MILLISECOND, 0);
+
+        return (int) ((currentTime - startOfDay.getTimeInMillis()) / (1000 * 60));
+    }
+
+    public double getComplianceScore() {
+        int compliantMinutes = getCompliantMinutes(true);
+        int timeElapsedInDay = getTimeElapsedInDay();
+        return (double) compliantMinutes / timeElapsedInDay * 100;
+    }
+
+    public double getPotentialComplianceScore(int timeboxLength) {
+        int compliantMinutes = getCompliantMinutes(true) + timeboxLength;
+        int timeElapsedInDay = getTimeElapsedInDay() + timeboxLength;
+        return (double) compliantMinutes / timeElapsedInDay * 100;
+    }
+
+    public void updateComplianceScore() {
+        if (!isWorking()) {
+            loadTimeboxes();
+        }
+        int compliantMinutes = 0;
+        for (Timebox timebox : timeboxList) {
+            if (timebox.isScheduleCompliant()) {
+                compliantMinutes += timebox.getDuration();
+            }
+        }
+        // add current timebox length to compliantMinutes
+        if (currentTimebox != null) {
+            compliantMinutes += currentTimebox.getDuration();
+        }
+
+        // get the number of minutes in the day that have already passed
+        long currentTime = System.currentTimeMillis();
+        Calendar startOfDay = Calendar.getInstance();
+        startOfDay.set(Calendar.HOUR_OF_DAY, 0);
+        startOfDay.set(Calendar.MINUTE, 0);
+        startOfDay.set(Calendar.SECOND, 0);
+        startOfDay.set(Calendar.MILLISECOND, 0);
+
+        int timeInDayElapsed = (int) ((currentTime - startOfDay.getTimeInMillis()) / (1000 * 60));
+        double complianceScore = (double) compliantMinutes / timeInDayElapsed * 100;
+
+        // Format the compliance score to one decimal place
+        String formattedScore = String.format("%.1f", complianceScore);
+
+        TextView complianceScoreTextView = findViewById(R.id.complianceScore);
+        complianceScoreTextView.setText(compliantMinutes + " / " + timeInDayElapsed + " (" + formattedScore + " %)");
+    }
+
+
+
     public boolean isFunModeOn() {
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         return prefs.getBoolean("funMode", false);
@@ -657,9 +829,20 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         long endTimeInMillis = timestampMinutesFromNow(currentTimeboxDuration);
         StartlinesManager.sendStartlineMessageToServer(this);
 
+        if (currentTimebox == null) {
+            createTimebox(System.currentTimeMillis());
+        } else {
+            updateTimebox();
+        }
+
 
         String endTimeFormatted = timestampToText(endTimeInMillis);
-        NotificationHelper.showTimerNotification(this, currentTimeboxDuration, endTimeFormatted, !isFunModeOn());
+        NotificationHelper.showTimerNotification(this,
+                currentTimeboxDuration,
+                endTimeFormatted,
+                getComplianceScore(),
+                getPotentialComplianceScore(currentTimeboxDuration),
+                !isFunModeOn());
 
         if (timeLimitInMillis == Long.MAX_VALUE) {
             // If there is no time limit set, play the ticking sound
@@ -696,6 +879,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             StartlinesManager.sendStartlineMessageToServer(this);
             switchMusicModeToOn();
             updatePermanentNotification();
+            clearTimebox();
+            deleteOldTimeboxes();
             NotificationHelper.cancelTimerNotification(this);
             timesStopButtonPressed = 0;
             Log.d("Timebox", "Timebox stopped");

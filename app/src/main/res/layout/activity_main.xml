@@ -63,8 +63,10 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/buttonsLinearLayout"
         app:layout_constraintEnd_toEndOf="@+id/funline_title"
+        app:layout_constraintHorizontal_bias="0.465"
         app:layout_constraintStart_toStartOf="@+id/funline_title"
-        app:layout_constraintTop_toBottomOf="@+id/funline_title" />
+        app:layout_constraintTop_toBottomOf="@+id/funline_title"
+        app:layout_constraintVertical_bias="0.0" />
 
     <LinearLayout
         android:id="@+id/buttonsLinearLayout"
@@ -136,27 +138,26 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/task_add_icon"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:hint="@string/task_name_edit_text_hint"
+        app:endIconContentDescription="Save Task"
+        app:endIconDrawable="@drawable/baseline_add_24"
+        app:endIconMode="custom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switchesLinearLayout"
-        app:endIconMode="custom"
-        app:endIconDrawable="@drawable/baseline_add_24"
-        app:endIconContentDescription="Save Task"
-        >
+        app:layout_constraintTop_toBottomOf="@+id/switchesLinearLayout">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/task_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
-            android:importantForAutofill="no" />
+            android:importantForAutofill="no"
+            android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -209,7 +210,28 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/task_add_icon"
+        app:layout_constraintTop_toBottomOf="@+id/complianceScoreText"
         tools:listitem="@layout/task_item" />
+
+    <TextView
+        android:id="@+id/complianceScoreText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:text="Schedule Compliance Score: "
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/task_add_icon" />
+
+    <TextView
+        android:id="@+id/complianceScore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="0 / 600 (0%)"
+        android:textSize="12sp"
+        app:layout_constraintStart_toEndOf="@+id/complianceScoreText"
+        app:layout_constraintTop_toTopOf="@+id/complianceScoreText" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

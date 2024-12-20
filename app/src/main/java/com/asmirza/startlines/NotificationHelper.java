@@ -142,11 +142,11 @@ public class NotificationHelper {
         NotificationManagerCompat.from(context).notify(X_MODE_NOTIFICATION_ID, builder.build());
     }
 
-    public static void showTimerNotification(Context context, int minutesRunning, String workingUntil, boolean isStartline) {
-        showTimerNotification(context, String.valueOf(minutesRunning), workingUntil, isStartline);
+    public static void showTimerNotification(Context context, int minutesRunning, String workingUntil, double percentCompliant, double potentialCompliant, boolean isStartline) {
+        showTimerNotification(context, String.valueOf(minutesRunning), workingUntil, percentCompliant, potentialCompliant, isStartline);
     }
 
-    public static void showTimerNotification(Context context, String minutesRunning, String workingUntil, boolean isStartline) {
+    public static void showTimerNotification(Context context, String minutesRunning, String workingUntil, double percentCompliant, double potentialCompliant, boolean isStartline) {
         // Example for Timer Notifications
         /* When the Startline/Funline timer is running, a notification is sent after each timebox
         ** is finished saying e.g. "2 minutes Startline timer running until 16:14", with a
@@ -160,10 +160,22 @@ public class NotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        StringBuilder contextText = new StringBuilder();
+        contextText.append(minutesRunning)
+                .append(" minutes ")
+                .append(isStartline ? "Startline" : "Funline")
+                .append(" timer running until ")
+                .append(workingUntil)
+                .append(". You are ")
+                .append(String.format("%.1f", percentCompliant))
+                .append("% compliant. Working towards ")
+                .append(String.format("%.1f", potentialCompliant))
+                .append("% compliant.");
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("Timer Running")
-                .setContentText(minutesRunning + " minutes " + (isStartline ? "Startline" : "Funline") + " timer running until " + workingUntil)
+                .setContentText(contextText.toString())
                 .addAction(R.drawable.ic_launcher_foreground, "Stop Timer", stopTimerPendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 

@@ -9,6 +9,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -29,7 +31,11 @@ public class StartlineService extends Service {
         Log.d("StartlineService", "Startline service entered");
         createNotificationChannel();
         // TODO: Fix this for Android SDK 34+ (Android 14+)
-        startForeground(NOTIFICATION_ID, getNotification());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, getNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        } else {
+            startForeground(NOTIFICATION_ID, getNotification());
+        }
         Log.d("StartlineService", "Startline foreground service started");
 
         if (intent != null) {
