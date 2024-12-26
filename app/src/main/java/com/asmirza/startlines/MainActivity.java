@@ -894,10 +894,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         if (getStartlineStatus() == "X") {
             startlineSnoozer = () -> {
                 setStartlineStatus("1");
+                switchMusicModeToOn();
             };
         } else if (getFunlineStatus() == "X") {
             startlineSnoozer = () -> {
                 setFunlineStatus("1");
+                switchMusicModeToOn();
             };
         }
         long twoMinutes = 2 * 60 * 1000;
