@@ -872,7 +872,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         if (timeboxRunnable != null) {
             killTimeboxHandler();
             vibrateOnStop();
-            setTimeboxStatusText("0");
+            clearTimeboxStatusText();
             resetWorkingUntilTime();
             stopTickingSound();
             setWorkingStatusToFalse();
@@ -891,19 +891,32 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     }
 
     public void snooze() {
-        if (getStartlineStatus() == "X") {
+        if ("X".equals(getStartlineStatus())) {
             startlineSnoozer = () -> {
                 setStartlineStatus("1");
-                switchMusicModeToOn();
+                if (!isWorking()) {
+                    switchMusicModeToOn();
+                    clearTimeboxStatusText();
+                }
+
             };
-        } else if (getFunlineStatus() == "X") {
+        } else if ("X".equals(getFunlineStatus())) {
             startlineSnoozer = () -> {
                 setFunlineStatus("1");
-                switchMusicModeToOn();
+                if (!isWorking()) {
+                    switchMusicModeToOn();
+                    clearTimeboxStatusText();
+                }
             };
         }
-        long twoMinutes = 2 * 60 * 1000;
-        handler.postDelayed(startlineSnoozer, twoMinutes);
+        if (startlineSnoozer != null) {
+            long twoMinutes = 2 * 60 * 1000;
+            String snoozeEndTime = timestampToText(System.currentTimeMillis() + twoMinutes);
+            setTimeboxStatusText("Snoozing... End time: " + snoozeEndTime);
+            handler.postDelayed(startlineSnoozer, twoMinutes);
+        } else {
+            Log.w("Timebox", "No startline or funline to snooze");
+        }
     }
 
     private void switchMusicModeToOn() {
@@ -988,6 +1001,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     private void setTimeboxStatusText(String text) {
         TextView currentTimeboxTextView = findViewById(R.id.current_timebox);
         currentTimeboxTextView.setText(text);
+    }
+
+    private void clearTimeboxStatusText() {
+        setTimeboxStatusText("0");
     }
 
     private void incrementStartlinesMissed() {
