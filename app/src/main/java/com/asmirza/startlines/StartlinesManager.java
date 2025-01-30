@@ -22,12 +22,12 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StartlinesManager {
     private static final int STARTLINE_ALARM_REQUEST_CODE = 0;
@@ -181,7 +181,6 @@ public class StartlinesManager {
                     if (vibrator != null && vibrator.hasVibrator()) {
                         VibrationEffect effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE);
                         vibrator.vibrate(effect);
-                        pauseMusic(context);
                     }
                 } else {
                     Log.d("StartlinesManager", "Screen is on, not vibrating");
@@ -216,6 +215,62 @@ public class StartlinesManager {
         } else {
             Log.d("StartlinesManager", "No music playing");
         }
+    }
+
+    private static void resumeMusic(Context context) {
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+
+        if (!audioManager.isMusicActive()) {
+            Log.d("StartlinesManager", "Resuming music");
+
+            KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY);
+            audioManager.dispatchMediaKeyEvent(keyEvent);
+
+            keyEvent = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY);
+            audioManager.dispatchMediaKeyEvent(keyEvent);
+
+            Log.d("StartlinesManager", "Music resumed");
+        } else {
+            Log.d("StartlinesManager", "Music is already playing");
+        }
+    }
+
+    public static void startMusicPauseLoop(Context context) {
+        Log.d("StartlinesManager", "Starting music pause loop");
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        AtomicBoolean musicWasPlaying = new AtomicBoolean(audioManager.isMusicActive());
+        new Thread(() -> {
+            while (isAppBlockingModeOn(context) && !isTimeboxRunning(context)
+                    && audioManager.getRingerMode() != AudioManager.RINGER_MODE_SILENT) {
+
+                if (!isScreenOn(context)) {
+                    boolean musicIsActiveNow = audioManager.isMusicActive();
+
+                    if (!musicWasPlaying.get() && musicIsActiveNow) {
+                        Log.d("StartlinesManager", "Music was not playing when X'd initially, but is playing now.");
+                        musicWasPlaying.set(true);
+                    }
+
+                    if (musicWasPlaying.get()) {
+                        if (musicIsActiveNow) {
+                            Log.d("StartlinesManager", "Music is playing and screen is off while X'd, pausing music.");
+                            pauseMusic(context);
+                        } else {
+                            Log.d("StartlinesManager", "Resuming music as part of X mode music loop.");
+                            resumeMusic(context);
+                        }
+                    }
+                }
+
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    break;
+                }
+            }
+            Log.d("StartlinesManager", "Music pause loop stopped. Timebox started, phone is silent, or blocking conditions not met.");
+        }).start();
     }
 
     /*********************** Code for executing or scheduling startlines ************************/
@@ -278,6 +333,7 @@ public class StartlinesManager {
             if (isAppBlockingModeOn(context) && !isTimeboxRunning(context)) {
                 openCalendarApp(context);
                 startVibrationLoop(context);
+                startMusicPauseLoop(context);
                 NotificationHelper.showXModeNotification(context, getStartlineStatus(context).equals("X"));
             }
             scheduleStartlineChecker(context,5, lineType);
