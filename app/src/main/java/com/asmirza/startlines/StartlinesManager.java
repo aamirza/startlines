@@ -376,7 +376,13 @@ public class StartlinesManager {
         boolean oneIsXAndOneIs1 = (startlineStatus.equals("X") && funlineStatus.equals("1")) || (startlineStatus.equals("1") && funlineStatus.equals("X"));
         Log.d("AppBlockingAccessiblityService", "Startlines missed: " + startLinesMissed);
 
+
+
         return bothAreX || (oneIsXAndOneIs0 && startLinesMissed >= 1) || (oneIsXAndOneIs1 && startLinesMissed >= 2);
+    }
+
+    public static boolean isAppBlockingModeOnOrBelowMinimumCompliance(Context context) {
+        return isBelowMinimumComplianceScore(context) || isAppBlockingModeOn(context);
     }
 
     public static Set<String> getBlockedApps(Context context) {
@@ -455,7 +461,7 @@ public class StartlinesManager {
             }
         } else if (!working && isAppBlocked(context, packageName)) {
             Log.d("AppBlockingAccessiblityService", "Blocked app detected: " + packageName);
-            if (isAppBlockingModeOn(context)) {
+            if (isAppBlockingModeOnOrBelowMinimumCompliance(context)) {
                 blockApp(context, packageName);
             } else if (isMusicModeOnAndAppNotPlayingMedia(context)) {
                 Log.d("StartlinesManager Blocker", "Music mode on and no music app playing media");
@@ -567,5 +573,36 @@ public class StartlinesManager {
         editor.apply();
 
         Log.d("Timebox", "Timeboxes saved to SharedPreferences");
+    }
+
+    /*********************** Code related to schedule compliance ************************/
+    public static int getMinimumComplianceScore(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return sharedPreferences.getInt("minimumComplianceScore", 20);
+    }
+
+    public static void setMinimumComplianceScore(Context context, int score) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("minimumComplianceScore", score);
+        editor.apply();
+    }
+
+    public static void saveComplianceScore(Context context, int score) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("complianceScore", score);
+        editor.apply();
+    }
+
+    public static int getComplianceScore(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return sharedPreferences.getInt("complianceScore", 0);
+    }
+
+    public static boolean isBelowMinimumComplianceScore(Context context) {
+        int complianceScore = getComplianceScore(context);
+        int minimumComplianceScore = getMinimumComplianceScore(context);
+        return complianceScore < minimumComplianceScore;
     }
 }

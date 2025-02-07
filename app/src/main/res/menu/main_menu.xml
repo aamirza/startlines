@@ -44,4 +44,10 @@
         app:showAsAction="never"
         android:orderInCategory="50"
         />
+
+    <item
+        android:id="@+id/change_compliance_score"
+        android:title="@string/set_compliance_target_menu_item"
+        android:orderInCategory="200"
+        app:showAsAction="never" />
 </menu>

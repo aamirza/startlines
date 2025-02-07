@@ -114,7 +114,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         updateComplianceScore();
         StartlinesManager.sendStartlineMessageToServer(this);
         NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
-        scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
+        //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
+        StartlinesManager.setMinimumComplianceScore(this, 20);
     }
 
     private void setupTaskList() {
@@ -196,6 +197,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.manage_timeboxes) {
             Intent intent = new Intent(this, TimeboxListActivity.class);
             startActivity(intent);
+            return true;
+        } else if (item.getItemId() == R.id.change_compliance_score) {
+            showComplianceScoreDialog();
             return true;
         }
 
@@ -279,6 +283,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             } else {
                 timesStopButtonPressed = 0;
                 stopTimebox();
+                StartlinesManager.setMinimumComplianceScore(this, 20);
             }
         });
     }
@@ -673,12 +678,20 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
         int timeInDayElapsed = (int) ((currentTime - startOfDay.getTimeInMillis()) / (1000 * 60));
         double complianceScore = (double) compliantMinutes / timeInDayElapsed * 100;
+        StartlinesManager.saveComplianceScore(this, (int) complianceScore);
 
         // Format the compliance score to one decimal place
         String formattedScore = String.format("%.1f", complianceScore);
 
         TextView complianceScoreTextView = findViewById(R.id.complianceScore);
-        complianceScoreTextView.setText(compliantMinutes + " / " + timeInDayElapsed + " (" + formattedScore + " %)");
+        String belowCompliance;
+        if (complianceScore < StartlinesManager.getMinimumComplianceScore(this)) {
+            belowCompliance = " BELOW TARGET";
+        } else {
+            belowCompliance = "";
+        }
+
+        complianceScoreTextView.setText(compliantMinutes + " / " + timeInDayElapsed + " (" + formattedScore + " %)" + belowCompliance);
     }
 
 
@@ -1227,6 +1240,32 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 "* Listen to a podcast for at least 2 minutes\n" +
                 "* Note any distractions you had this timebox session\n");
         builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+
+    private void showComplianceScoreDialog() {
+        int currentScore = StartlinesManager.getMinimumComplianceScore(this);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Set Minimum Compliance Score");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setText(String.valueOf(currentScore));
+        builder.setView(input);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            int newScore = Integer.parseInt(input.getText().toString());
+            if (newScore < 0 || newScore > 100) {
+                Toast.makeText(this, "Score must be between 0 and 100", Toast.LENGTH_SHORT).show();
+            } else {
+                StartlinesManager.setMinimumComplianceScore(this, newScore);
+                Toast.makeText(this, "Minimum compliance score updated!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
         builder.show();
     }
 
