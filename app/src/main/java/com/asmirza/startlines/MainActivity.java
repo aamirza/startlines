@@ -201,6 +201,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.change_compliance_score) {
             showComplianceScoreDialog();
             return true;
+        } else if (item.getItemId() == R.id.force_startlines) {
+            executeStartline("startline");
+            StartlinesManager.executeStartlines(this, "startline");
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

@@ -23,4 +23,5 @@
     <string name="menu_select_calendar_app">Select Calendar App</string>
     <string name="manage_timeboxes_menu_text">Manage Timeboxes</string>
     <string name="set_compliance_target_menu_item">Set Compliance Target</string>
+    <string name="force_startlines_text">Force Startlines</string>
 </resources>
