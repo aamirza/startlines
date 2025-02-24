@@ -532,7 +532,9 @@ public class StartlinesManager {
         return "{ \"startline\": \"" + startlineStatus + "\", " +
                 "\"funline\": \"" + funlineStatus + "\", " +
                 "\"working\": \"" + workingStatus + "\", " +
-                "\"blocked\": \"" + appBlockingMode + "\" }";
+                "\"blocked\": \"" + appBlockingMode + "\", " +
+                "\"complianceScore\": \"" + getComplianceScore(context) + "\", " +
+                "\"compliantMinutes\": \"" + getCompliantMinutes(context) + "\" }";
     }
 
     public static void sendStartlineMessageToServer(Context context) {
@@ -595,9 +597,21 @@ public class StartlinesManager {
         editor.apply();
     }
 
+    public static void saveCompliantMinutes(Context context, int minutes) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("compliantMinutes", minutes);
+        editor.apply();
+    }
+
     public static int getComplianceScore(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         return sharedPreferences.getInt("complianceScore", 0);
+    }
+
+    public static int getCompliantMinutes(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return sharedPreferences.getInt("compliantMinutes", 0);
     }
 
     public static boolean isBelowMinimumComplianceScore(Context context) {

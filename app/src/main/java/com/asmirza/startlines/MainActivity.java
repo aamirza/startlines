@@ -683,6 +683,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         int timeInDayElapsed = (int) ((currentTime - startOfDay.getTimeInMillis()) / (1000 * 60));
         double complianceScore = (double) compliantMinutes / timeInDayElapsed * 100;
         StartlinesManager.saveComplianceScore(this, (int) complianceScore);
+        StartlinesManager.saveCompliantMinutes(this, compliantMinutes);
 
         // Format the compliance score to one decimal place
         String formattedScore = String.format("%.1f", complianceScore);
