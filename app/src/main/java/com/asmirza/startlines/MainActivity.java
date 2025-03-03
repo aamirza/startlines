@@ -685,6 +685,14 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         TextView complianceScoreTextView = findViewById(R.id.complianceScore);
 
         String complianceScoreText = compliantMinutes + " / " + timeInDayElapsed + " (" + formattedScore + " %)";
+        if (!isWorking()) {
+            int potentialCompliantMinutes = compliantMinutes + 30;
+            int potentialTimeInDayElapsed = timeInDayElapsed + 30;
+            double potentialComplianceScore = (double) potentialCompliantMinutes / potentialTimeInDayElapsed * 100;
+            String potentialFormattedScore = String.format("%.1f", potentialComplianceScore);
+            complianceScoreText += " → " + potentialFormattedScore + "%";
+        }
+
 
         complianceScoreTextView.setText(complianceScoreText);
     }
