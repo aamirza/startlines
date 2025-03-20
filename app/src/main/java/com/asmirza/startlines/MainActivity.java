@@ -1281,6 +1281,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 "* Note any distractions you had this timebox session\n");
         builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
         builder.show();
+        setTimeLimit(0);
+
     }
 
 
