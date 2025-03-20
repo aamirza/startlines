@@ -112,6 +112,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         setupTaskList();
         loadTasks();
         loadTimeboxes();
+        setWorkingStatusToFalse();  //  needed for accidental restarts
+        clearTimebox();  // needed for accidental restarts
         updateComplianceScore();
         StartlinesManager.sendStartlineMessageToServer(this);
         NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
