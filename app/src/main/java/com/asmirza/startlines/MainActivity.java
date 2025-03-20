@@ -859,7 +859,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 getPotentialComplianceScore(currentTimeboxDuration),
                 !isFunModeOn());
 
-        if (timeLimitInMillis == Long.MAX_VALUE) {
+        if (!isTimeLimitSet()) {
             // If there is no time limit set, play the ticking sound
             playTickingSound();
         }
@@ -1156,6 +1156,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
     public boolean isFunlineComplete() {
         return getFunlineStatus().equals("1");
+    }
+
+    public boolean isTimeLimitSet() {
+        return timeLimitInMillis != Long.MAX_VALUE;
     }
 
     private boolean isAccessibilityServiceEnabled() {
