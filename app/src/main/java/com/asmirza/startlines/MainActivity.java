@@ -190,8 +190,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             openIPSettingsDialog();
             return true;
         } else if (item.getItemId() == R.id.snooze_startlines) {
-            snooze();
-            Log.d("MainActivity", "Snooze Startlines button pressed");
+            Toast.makeText(this, "Snooze has been disabled. Start for just two minutes.", Toast.LENGTH_SHORT);
             return true;
         } else if (item.getItemId() == R.id.manage_timeboxes) {
             Intent intent = new Intent(this, TimeboxListActivity.class);
