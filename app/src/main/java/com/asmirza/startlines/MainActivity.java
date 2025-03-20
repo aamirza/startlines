@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -1067,7 +1068,18 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             Log.d("MainActivity", "Startline set to 1 after timebox completion");
         }
         resetStartlinesMissed();
+        unmutePhoneIfTimeboxRunningAndNoTimeLimitIsSet();
         NotificationHelper.cancelXModeNotification(this);
+    }
+
+    private void unmutePhoneIfTimeboxRunningAndNoTimeLimitIsSet() {
+        if (isWorking() && !isTimeLimitSet()) {
+            AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+            int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            if (currentVolume == 0) {
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 5, 0);
+            }
+        }
     }
 
     public void executeStartline(String lineType) {
