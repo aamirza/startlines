@@ -978,19 +978,24 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             String inputText = input.getText().toString();
             if (!inputText.isEmpty()) {
                 int minutes = Integer.parseInt(inputText);
-                timeLimitInMillis = timestampMinutesFromNow(minutes);
-                String endTimeText = timestampToText(timeLimitInMillis);
-                setWorkingUntilText(endTimeText);
-                stopTickingSound();
+                setTimeLimit(minutes);
                 Log.d("Timebox", "Time limit set for " + minutes + " minutes");
             } else {
                 resetWorkingUntilTime();
+                playTickingSound();
                 Log.d("Timebox", "Time limit cleared");
             }
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
+    }
+
+    private void setTimeLimit(int minutes) {
+        timeLimitInMillis = timestampMinutesFromNow(minutes);
+        String endTimeText = timestampToText(timeLimitInMillis);
+        setWorkingUntilText(endTimeText);
+        stopTickingSound();
     }
 
     private void setStartlineStatus(String i) {
