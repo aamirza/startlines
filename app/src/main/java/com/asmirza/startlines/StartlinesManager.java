@@ -12,6 +12,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.PowerManager;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -173,7 +177,8 @@ public class StartlinesManager {
         AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         new Thread(() -> {
             while (isAppBlockingModeOn(context) && !isTimeboxRunning(context)
-                    && audioManager.getRingerMode() != AudioManager.RINGER_MODE_SILENT) {
+                    && audioManager.getRingerMode() != AudioManager.RINGER_MODE_SILENT
+                    && !isNotConnectedToIndoorWifi(context)) {
                 if (!isScreenOn(context)) {
                     Log.d("StartlinesManager", "Screen is off, vibrating");
 
@@ -241,7 +246,8 @@ public class StartlinesManager {
         AtomicBoolean musicWasPlaying = new AtomicBoolean(audioManager.isMusicActive());
         new Thread(() -> {
             while (isAppBlockingModeOn(context) && !isTimeboxRunning(context)
-                    && audioManager.getRingerMode() != AudioManager.RINGER_MODE_SILENT) {
+                    && audioManager.getRingerMode() != AudioManager.RINGER_MODE_SILENT
+                    && !isNotConnectedToIndoorWifi(context)) {
 
                 if (!isScreenOn(context)) {
                     boolean musicIsActiveNow = audioManager.isMusicActive();
@@ -595,5 +601,37 @@ public class StartlinesManager {
     public static int getCompliantMinutes(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         return sharedPreferences.getInt("compliantMinutes", 0);
+    }
+
+    /*********************** Code related to checking WiFi networks ************************/
+
+    public static boolean isNotConnectedToIndoorWifi(Context context) {
+        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        if (networkInfo == null || !networkInfo.isConnected()) {
+            Log.d("WifiChecker", "No active network connection.");
+            return true; // Not connected to any network
+        }
+
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        String currentSSID = wifiInfo.getSSID().replace("\"", ""); // Remove quotes around SSID
+
+        Set<String> indoorWifiSet = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE)
+                .getStringSet("indoorWiFi", null);
+
+        if (indoorWifiSet == null || indoorWifiSet.isEmpty()) {
+            Log.d("WifiChecker", "No indoor WiFi networks set.");
+            return true; // No saved indoor WiFi networks
+        }
+
+        if (!indoorWifiSet.contains(currentSSID)) {
+            Log.d("WifiChecker", "Connected to WiFi, but not an indoor one: " + currentSSID);
+            return true; // Connected to WiFi but not an indoor one
+        }
+
+        Log.d("WifiChecker", "Connected to an indoor WiFi: " + currentSSID);
+        return false; // Connected to an indoor WiFi
     }
 }

@@ -53,8 +53,9 @@
         />
 
     <item
-        android:id="@+id/change_compliance_score"
-        android:title="@string/set_compliance_target_menu_item"
-        android:orderInCategory="200"
-        app:showAsAction="never" />
+        android:id="@+id/indoor_wifi_settings"
+        android:title="@string/indoor_wifi_settings_menu_button"
+        app:showAsAction="never"
+        android:orderInCategory="50" />
+
 </menu>

@@ -203,6 +203,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             executeStartline("startline");
             StartlinesManager.executeStartlines(this, "startline");
             return true;
+        } else if (item.getItemId() == R.id.indoor_wifi_settings) {
+            startActivity(new Intent(this, IndoorWifiSelectionActivity.class));
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -862,7 +865,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 getPotentialComplianceScore(currentTimeboxDuration),
                 !isFunModeOn());
 
-        if (!isTimeLimitSet()) {
+        if (!isTimeLimitSet() && !StartlinesManager.isNotConnectedToIndoorWifi(this)) {
             // If there is no time limit set, play the ticking sound
             playTickingSound();
         }
@@ -985,7 +988,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 Log.d("Timebox", "Time limit set for " + minutes + " minutes");
             } else {
                 resetWorkingUntilTime();
-                playTickingSound();
+                if (!StartlinesManager.isNotConnectedToIndoorWifi(this)) {
+                    playTickingSound();
+                }
                 Log.d("Timebox", "Time limit cleared");
             }
         });
