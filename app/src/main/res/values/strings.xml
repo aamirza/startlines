@@ -23,6 +23,7 @@
     <string name="menu_select_calendar_app">Select Calendar App</string>
     <string name="manage_timeboxes_menu_text">Manage Timeboxes</string>
     <string name="set_compliance_target_menu_item">Set Compliance Target</string>
+    <string name="manage_unblocked_apps_button_text">Temporarily Unblock Apps</string>
     <string name="force_startlines_text">Force Startlines</string>
     <string name="indoor_wifi_settings_menu_button">Set Indoor WiFi</string>
 </resources>

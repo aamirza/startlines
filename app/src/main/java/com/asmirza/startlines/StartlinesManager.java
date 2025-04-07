@@ -413,6 +413,15 @@ public class StartlinesManager {
         return isAppDistracting;
     }
 
+    public static boolean isAppTemporarilyUnblocked(Context context, String packageName) {
+        Log.d("StartlinesManager", "Checking if app is temporarily unblocked: " + packageName);
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        Set<String> temporarilyUnblockedApps = sharedPreferences.getStringSet("temporarilyUnblockedApps", new HashSet<>());
+        boolean isAppTemporarilyUnblocked = temporarilyUnblockedApps.contains(packageName);
+        Log.d("StartlinesManager", "App is temporarily unblocked: " + isAppTemporarilyUnblocked);
+        return isAppTemporarilyUnblocked;
+    }
+
     public static void blockApp(Context context, String packageName) {
         Log.d("StartlinesManager", "Conditions for blocking app met: " + packageName);
         openCalendarApp(context);
@@ -451,7 +460,7 @@ public class StartlinesManager {
     public static void blockAppIfNecessary(Context context, String packageName) {
         boolean working = StartlinesManager.isTimeboxRunning(context);
 
-        if (working && isAppDistracting(context, packageName)) {
+        if (working && isAppDistracting(context, packageName) && !isAppTemporarilyUnblocked(context, packageName)) {
             Log.d("StartlinesManager Blocker", "Distracting app detected, blocking: " + packageName);
             // For blocking distracting apps when working
             if (isMusicModeOnAndAppNotPlayingMedia(context)) {

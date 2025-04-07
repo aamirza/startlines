@@ -3,12 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/snooze_startlines"
-        android:title="@string/snooze_menu_text"
-        android:orderInCategory="30"
-        app:showAsAction="never" />
-
-    <item
         android:id="@+id/manage_timeboxes"
         android:title="@string/manage_timeboxes_menu_text"
         android:orderInCategory="40"
@@ -37,6 +31,12 @@
         android:id="@+id/manage_music_apps"
         android:title="@string/music_apps_button_text"
         android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/manage_unblocked_apps"
+        android:title="@string/manage_unblocked_apps_button_text"
+        android:orderInCategory="120"
         app:showAsAction="never" />
 
     <item

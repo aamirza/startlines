@@ -192,8 +192,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.ip_port_settings) {
             openIPSettingsDialog();
             return true;
-        } else if (item.getItemId() == R.id.snooze_startlines) {
-            Toast.makeText(this, "Snooze has been disabled. Start for just two minutes.", Toast.LENGTH_SHORT);
+        } else if (item.getItemId() == R.id.manage_unblocked_apps) {
+            Log.d("MainActivity", "Manage temporarily unblocked apps button pressed");
+            Intent intent = new Intent(this, AppBlockingActivity.class);
+            intent.putExtra("blockType", "TEMPORARY_UNBLOCK");
+            startActivity(intent);
             return true;
         } else if (item.getItemId() == R.id.manage_timeboxes) {
             Intent intent = new Intent(this, TimeboxListActivity.class);
@@ -903,6 +906,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             clearTimebox();
             deleteOldTimeboxes();
             NotificationHelper.cancelTimerNotification(this);
+            clearTemporaryBlockList();
             timesStopButtonPressed = 0;
             Log.d("Timebox", "Timebox stopped");
         } else {
@@ -1302,5 +1306,13 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     private static long timestampMinutesFromNow(int minutes) {
         /* Returns a timestamp for a certain amount of minutes from the current time */
         return System.currentTimeMillis() + ((long) minutes * 60 * 1000);
+    }
+
+    private void clearTemporaryBlockList() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.remove("temporarilyUnblockedApps");
+        editor.apply();
+        Log.d("MainActivity", "Temporary block list cleared");
     }
 }

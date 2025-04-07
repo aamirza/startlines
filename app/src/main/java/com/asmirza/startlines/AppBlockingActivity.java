@@ -100,6 +100,8 @@ public class AppBlockingActivity extends AppCompatActivity {
             editor.putStringSet("musicApps", selectedAppPackageNames);
         } else if (blockType.equals("CALENDAR_APP")) {
             editor.putStringSet("calendarApp", selectedAppPackageNames);
+        } else if (blockType.equals("TEMPORARY_UNBLOCK")) {
+            editor.putStringSet("temporarilyUnblockedApps", selectedAppPackageNames);
         }
 
         editor.apply();
@@ -115,6 +117,8 @@ public class AppBlockingActivity extends AppCompatActivity {
             return prefs.getStringSet("musicApps", new HashSet<>());
         } else if (blockType.equals("CALENDAR_APP")) {
             return prefs.getStringSet("calendarApp", new HashSet<>());
+        } else if (blockType.equals("TEMPORARY_UNBLOCK")) {
+            return prefs.getStringSet("temporarilyUnblockedApps", new HashSet<>());
         }
 
         return prefs.getStringSet("blockedApps", new HashSet<>());
