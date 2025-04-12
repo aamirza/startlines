@@ -199,6 +199,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             startActivity(intent);
             return true;
         } else if (item.getItemId() == R.id.manage_timeboxes) {
+            // record time this was pressed
+            recordTime("manageTimeboxButtonPressed");
             Intent intent = new Intent(this, TimeboxListActivity.class);
             startActivity(intent);
             return true;
@@ -464,6 +466,19 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             saveStatuses("0", "0", "", false, true, new HashSet<>());
             loadStatuses();
         }
+    }
+
+    private void recordTime(String sharedPreferenceName) {
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        long currentTime = System.currentTimeMillis();
+        editor.putLong(sharedPreferenceName, currentTime);
+        editor.apply();
+    }
+
+    private long getRecordedTime(String sharedPreferenceName) {
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return sharedPreferences.getLong(sharedPreferenceName, 0);
     }
 
     private Set<String> getTasksAsSet() {
@@ -838,6 +853,16 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     }
 
     public void startTimebox() {
+        // don't allow start if timebox hasn't been updated
+        if (getRecordedTime("timeboxEnded") > getRecordedTime("manageTimeboxButtonPressed")) {
+            Toast.makeText(this, "Record whether the previous timebox was schedule compliant.", Toast.LENGTH_SHORT).show();
+            Log.d("MainActivity", "Starting timebox prevented. Previous timebox not updated." +
+                    " Previous timebox started: " + getRecordedTime("timeboxStarted") +
+                    " Previous timebox ended: " + getRecordedTime("timeboxEnded"));
+            return;
+        }
+
+
         if (isWorking()) {
             Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
             Log.w("Timebox", "Timebox already running, not starting a new one");
@@ -908,6 +933,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             NotificationHelper.cancelTimerNotification(this);
             clearTemporaryBlockList();
             timesStopButtonPressed = 0;
+            recordTime("timeboxEnded");
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
