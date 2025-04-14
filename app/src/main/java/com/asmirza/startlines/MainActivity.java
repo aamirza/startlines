@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         addTextChangeListener();
         funModeSwitchListener();
         musicModeSwitchListener();
+        calendarModeSwitchListener();
         setupStartButton();
         setupStopButton();
         setupSetTimeLimitButton();
@@ -271,6 +272,14 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         });
     }
 
+    private void calendarModeSwitchListener() {
+        Switch calendarModeSwitch = findViewById(R.id.calendar_mode_switch);
+
+        calendarModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            StartlinesManager.setCalendarMode(this, isChecked);
+        });
+    }
+
     private void setupStartButton() {
         Button startButton = findViewById(R.id.start_button);
         Log.d("MainActivity", "Setting up start button");
@@ -422,7 +431,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         }
     }
 
-    public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode, boolean musicMode, Set<String> tasks) {
+    public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode, boolean musicMode, boolean calendarMode, Set<String> tasks) {
         /* Save Startlines, Funline, and Task Name in case of reboot or app close */
         SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -433,6 +442,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         editor.putBoolean("funMode", funMode);
         editor.putInt("startlinesMissed", startlinesMissed);
         editor.putBoolean("musicMode", musicMode);
+        editor.putBoolean("calendarMode", calendarMode);
         editor.putStringSet("tasks", tasks);
 
         editor.apply(); // Saves changes asynchronously
@@ -449,12 +459,14 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             boolean funMode = sharedPreferences.getBoolean("funMode", false);
             startlinesMissed = sharedPreferences.getInt("startlinesMissed", 0);
             boolean musicMode = sharedPreferences.getBoolean("musicMode", true);
+            boolean calendarMode = sharedPreferences.getBoolean("calendarMode", false);
 
             TextView startlineStatusTextView = findViewById(R.id.startline_status);
             TextView funlineStatusTextView = findViewById(R.id.funline_status);
             TextInputEditText taskNameTextView = findViewById(R.id.task_name);
             Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
             Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
+            Switch calendarModeSwitch = findViewById(R.id.calendar_mode_switch);
 
 
             startlineStatusTextView.setText(startlineStatus);
@@ -462,8 +474,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             taskNameTextView.setText(taskName);
             funModeSwitch.setChecked(funMode);
             musicModeSwitch.setChecked(musicMode);
+            calendarModeSwitch.setChecked(calendarMode);
         } catch (Exception e) {
-            saveStatuses("0", "0", "", false, true, new HashSet<>());
+            saveStatuses("0", "0", "", false, true, true, new HashSet<>());
             loadStatuses();
         }
     }
@@ -531,6 +544,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         TextInputEditText taskNameTextView = findViewById(R.id.task_name);
         Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
         Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
+        Switch calendarModeSwitch = findViewById(R.id.calendar_mode_switch);
 
 
         String startlineStatus = startlineStatusTextView.getText().toString();
@@ -538,9 +552,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         String taskName = taskNameTextView.getText().toString();
         boolean funMode = funModeSwitch.isChecked();
         boolean musicMode = musicModeSwitch.isChecked();
+        boolean calendarMode = calendarModeSwitch.isChecked();
         Set<String> taskSet = getTasksAsSet();
 
-        saveStatuses(startlineStatus, funlineStatus, taskName, funMode, musicMode, taskSet);
+        saveStatuses(startlineStatus, funlineStatus, taskName, funMode, musicMode, calendarMode, taskSet);
     }
 
     private void saveWorkingStatus() {
@@ -873,6 +888,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
     public void startTimebox(int currentTimeboxDuration) {
         /* For starting the 2 minute staircase timeboxes when the start button is pressed */
+
         setWorkingStatusToTrue();
         int timeboxDurationInMillis = currentTimeboxDuration * 60 * 1000;
         long endTimeInMillis = timestampMinutesFromNow(currentTimeboxDuration);
@@ -900,6 +916,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
         setTimeboxStatusText(currentTimeboxDuration + " (" + endTimeFormatted + ")");
         Log.d("Timebox", "Timebox started for " + currentTimeboxDuration + " minutes, ending at " + endTimeFormatted);
+
+        openCalendarIfCheckInModeOn();
+
         // Set Startlines to "1" after timebox completion and start the new timebox
 
         timeboxRunnable = () -> {
@@ -934,6 +953,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             clearTemporaryBlockList();
             timesStopButtonPressed = 0;
             recordTime("timeboxEnded");
+            openCalendarIfCheckInModeOn();
+            switchCalendarModeToOn();
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
@@ -983,6 +1004,13 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             funModeSwitch.setChecked(funMode);
         }
 
+    }
+
+    private void switchCalendarModeToOn() {
+        Switch calendarModeSwitch = findViewById(R.id.calendar_mode_switch);
+        if (!calendarModeSwitch.isChecked()) {
+            calendarModeSwitch.setChecked(true);
+        }
     }
 
     private void vibrateOnStop() {
@@ -1209,6 +1237,17 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
     public boolean isTimeLimitSet() {
         return timeLimitInMillis != Long.MAX_VALUE;
+    }
+
+    public boolean isCalendarCheckInModeOn() {
+        Switch calendarCheckInSwitch = findViewById(R.id.calendar_mode_switch);
+        return calendarCheckInSwitch.isChecked();
+    }
+
+    public void openCalendarIfCheckInModeOn() {
+        if (isCalendarCheckInModeOn()) {
+            StartlinesManager.openCalendarApp(this);
+        }
     }
 
     private boolean isAccessibilityServiceEnabled() {

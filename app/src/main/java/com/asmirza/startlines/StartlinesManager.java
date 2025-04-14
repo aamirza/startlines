@@ -109,6 +109,15 @@ public class StartlinesManager {
         setMusicMode(context, true);
     }
 
+    public static void setCalendarMode(Context context, boolean calendarMode) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putBoolean("calendarMode", calendarMode);
+        Log.d("StartlineManager", "Calendar mode set: " + calendarMode);
+        editor.apply();
+    }
+
     public static void setTickingSoundPlaying(Context context, boolean tickingSoundPlaying) {
         SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();

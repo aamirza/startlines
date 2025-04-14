@@ -26,4 +26,5 @@
     <string name="manage_unblocked_apps_button_text">Temporarily Unblock Apps</string>
     <string name="force_startlines_text">Force Startlines</string>
     <string name="indoor_wifi_settings_menu_button">Set Indoor WiFi</string>
+    <string name="calendar_mode_switch_text">Calendar Check-In Mode</string>
 </resources>
