@@ -34,6 +34,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -49,6 +50,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
@@ -148,6 +150,31 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             taskInputLayout.postDelayed(() -> taskInputLayout.setError(null), 2000);
         }
     }
+
+    private void addTasks(List<String> taskNames) {
+        Set<String> existingTasks = new HashSet<>();
+        for (Task task : taskList) {
+            existingTasks.add(task.getName());
+        }
+
+
+        int startIndex = taskList.size();
+        int newTasks = 0;
+
+        for (String taskName : taskNames) {
+            String trimmed = taskName.trim();
+            if (!trimmed.isEmpty() && !existingTasks.contains(trimmed)) {
+                taskList.add(new Task(taskName.trim()));
+                newTasks++;
+            }
+        }
+
+        if (newTasks == 0) return;
+
+        taskAdapter.notifyItemRangeInserted(startIndex, taskList.size() - startIndex);
+        saveTasks();
+    }
+
 
     public void onTaskListUpdated(List<Task> updatedTaskList) {
         saveTasks();
@@ -1348,18 +1375,66 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         // Create an AlertDialog for what you should do before the timebox ends
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Stop Button Info");
-        builder.setMessage("Until the timebox ends, try to do the following housekeeping tasks:\n\n" +
+        String advice = getStopButtonAdvice();
+        builder.setMessage("Until the timebox ends, try to do the following housekeeping tasks:\n\n" + advice);
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            dialog.dismiss();
+            setTimeLimit(0);
+            String[] taskArray = advice.split("\\n");
+            addTasks(Arrays.asList(taskArray));
+        });
+
+        builder.setNeutralButton("Edit", (dialog, which) -> {
+            dialog.dismiss();
+            showEditAdviceDialog(this::showStopButtonAdviceDialogue);
+        });
+        builder.show();
+
+    }
+
+    private String getStopButtonAdvice() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        String defaultAdvice =
                 "* Start a new Freedom session.\n" +
                 "* Check Todoist\n" +
                 "* Check your calendar\n" +
                 "* Try to organize at least 1 or 2 Evernote notes\n" +
                 "* Listen to a podcast for at least 2 minutes\n" +
-                "* Note any distractions you had this timebox session\n");
-        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
-        builder.show();
-        setTimeLimit(0);
-
+                "* Note any distractions you had this timebox session\n";
+        return prefs.getString("stopButtonAdvice", defaultAdvice);
     }
+
+    private void showEditAdviceDialog(Runnable onSaveCallback) {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        String currentAdvice = prefs.getString("stopButtonAdvice", "");
+
+        final EditText input = new EditText(this);
+        input.setText(currentAdvice);
+        input.setHint("Enter each task on a new line");
+
+
+        input.setMinLines(6);
+        input.setMaxLines(15);
+        input.setSingleLine(false);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE |
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT);
+        input.setImeOptions(EditorInfo.IME_FLAG_NO_ENTER_ACTION);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit Stop Button Advice")
+                .setView(input)
+                .setMessage("Each task will be added separately.\nSeparate each task by a new line.")
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String updatedAdvice = input.getText().toString();
+                    prefs.edit().putString("stopButtonAdvice", updatedAdvice).apply();
+                    if (onSaveCallback != null) {
+                        onSaveCallback.run();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
 
 
     private static String timestampToText(long timestamp) {
