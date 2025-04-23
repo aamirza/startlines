@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
@@ -14,6 +15,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+
+import java.time.LocalDate;
 
 public class NotificationHelper {
 
@@ -160,6 +163,15 @@ public class NotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        Intent acknowledgeIntent = new Intent(context, MainActivity.class);
+        acknowledgeIntent.setAction("ACTION_ACKNOWLEDGE_TIMER_NOTIFICATION");
+        PendingIntent acknowledgePendingIntent = PendingIntent.getActivity(
+                context,
+                7256321,
+                acknowledgeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         StringBuilder contextText = new StringBuilder();
         contextText.append(minutesRunning)
                 .append(" minutes ")
@@ -177,6 +189,9 @@ public class NotificationHelper {
                 .setContentTitle("Timer Running")
                 .setContentText(contextText.toString())
                 .addAction(R.drawable.ic_launcher_foreground, "Stop Timer", stopTimerPendingIntent)
+                .addAction(R.drawable.ic_launcher_foreground, "Acknowledge", acknowledgePendingIntent)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(contextText.toString()))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
@@ -185,6 +200,13 @@ public class NotificationHelper {
             Log.w("NotificationHelper", "Notification permission not granted");
             return; // Don't proceed if permission is not granted
         }
+
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        String today = LocalDate.now().toString();
+        String shownKey = "shown_" + today;
+        int currentTimesShown = prefs.getInt(shownKey, 0);
+        prefs.edit().putInt(shownKey, currentTimesShown + 1).apply();
+        prefs.edit().putBoolean("timerNotificationAcknowledged", false).apply();
 
         NotificationManagerCompat.from(context).notify(TIMER_NOTIFICATION_ID, builder.build());
     }

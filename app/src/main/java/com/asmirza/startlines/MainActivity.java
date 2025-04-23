@@ -49,6 +49,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -118,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         setWorkingStatusToFalse();  //  needed for accidental restarts
         clearTimebox();  // needed for accidental restarts
         updateComplianceScore();
+        setNotificationAcknowledgementScore();
         StartlinesManager.sendStartlineMessageToServer(this);
         NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
@@ -355,6 +357,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         Log.d("ApplifeCycle", "App is resumed, back in foreground");
         loadStatuses();
         updateComplianceScore();
+        setNotificationAcknowledgementScore();
         super.onResume();
     }
 
@@ -441,6 +444,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                         snooze();
                     }
                     break;
+                case "ACTION_ACKNOWLEDGE_TIMER_NOTIFICATION":
+                    Log.d("MainActivity", "Acknowledge button pressed");
+                    incrementNotificationAcknowledgementCount();
+                    break;
             }
         } else {
             Log.d("MainActivity", "onNewIntent called with intent: " + intent.getStringExtra("lineType"));
@@ -456,6 +463,56 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 }
             }
         }
+    }
+
+    private void incrementNotificationAcknowledgementCount() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        if (!prefs.getBoolean("timerNotificationAcknowledged", false)) {
+            String today = LocalDate.now().toString();
+            String acknowledgementKey = "acknowledged_" + today;
+
+            int count = prefs.getInt(acknowledgementKey, 0);
+            prefs.edit().putInt(acknowledgementKey, count + 1).apply();
+            prefs.edit().putBoolean("timerNotificationAcknowledged", true).apply();
+            setNotificationAcknowledgementScore();
+            Log.d("MainActivity", "Acknowledgement count incremented to: " + (count + 1));
+        }
+    }
+
+    private int getAcknowledgementCount() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        String today = LocalDate.now().toString();
+        String acknowledgementKey = "acknowledged_" + today;
+
+        return prefs.getInt(acknowledgementKey, 0);
+    }
+
+    private int getTimesAcknowledgementNotificationShown() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        String today = LocalDate.now().toString();
+        String shownKey = "shown_" + today;
+
+        return prefs.getInt(shownKey, 0);
+    }
+
+    private double getAcknowledgementPercentage() {
+        int count = getAcknowledgementCount();
+        int total = getTimesAcknowledgementNotificationShown();
+
+        if (total == 0) {
+            return 0;
+        }
+
+        return ((double) count / total) * 100;
+    }
+
+    private void setNotificationAcknowledgementScore() {
+        int shown = getTimesAcknowledgementNotificationShown();
+        int acknowledged = getAcknowledgementCount();
+        double percentage = getAcknowledgementPercentage();
+
+        TextView notificationScore = findViewById(R.id.notificationScore);
+        notificationScore.setText(acknowledged + " / " + shown + " (" + String.format("%.1f", percentage) + "%)");
     }
 
     public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode, boolean musicMode, boolean calendarMode, Set<String> tasks) {
@@ -945,6 +1002,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         Log.d("Timebox", "Timebox started for " + currentTimeboxDuration + " minutes, ending at " + endTimeFormatted);
 
         openCalendarIfCheckInModeOn();
+        setNotificationAcknowledgementScore();
 
         // Set Startlines to "1" after timebox completion and start the new timebox
 
