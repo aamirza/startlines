@@ -241,6 +241,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.indoor_wifi_settings) {
             startActivity(new Intent(this, IndoorWifiSelectionActivity.class));
             return true;
+        } else if (item.getItemId() == R.id.snooze_startlines) {
+            snooze();
+            Log.d("MainActivity", "Snooze Startlines button pressed");
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
