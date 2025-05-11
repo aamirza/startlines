@@ -11,6 +11,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -19,6 +20,7 @@ import android.net.wifi.WifiManager;
 import android.os.PowerManager;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.AlarmClock;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -496,6 +498,42 @@ public class StartlinesManager {
         Set<String> musicApps = sharedPreferences.getStringSet("musicApps", new HashSet<>());
         return musicApps;
     }
+
+    public static void saveBreakApp(Context context, String packageName) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("breakApp", packageName);
+        editor.apply();
+    }
+
+    public static String getBreakApp(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        return prefs.getString("breakApp", "");
+    }
+
+    public static void openBreakApp(Context context) {
+        String packageName = getBreakApp(context);
+        if (packageName == null) return;
+
+        PackageManager pm = context.getPackageManager();
+        Intent launchIntent = pm.getLaunchIntentForPackage(packageName);
+        if (launchIntent != null) {
+            context.startActivity(launchIntent);
+        }
+    }
+
+    public static void startSystemTimer(Context context) {
+        Intent intent = new Intent(AlarmClock.ACTION_SET_TIMER)
+                .putExtra(AlarmClock.EXTRA_MESSAGE, "Startlines Timer")
+                .putExtra(AlarmClock.EXTRA_LENGTH, 120)
+                .putExtra(AlarmClock.EXTRA_SKIP_UI, false); // Set to true if you want it to start silently
+
+        if (intent.resolveActivity(context.getPackageManager()) != null) {
+            context.startActivity(intent);
+        }
+    }
+
+
 
     public static Set<String> getCalendarApp(Context context) {
         Log.d("StartlinesManager", "Getting calendar apps");

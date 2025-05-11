@@ -16,14 +16,17 @@ import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -32,11 +35,16 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -971,6 +979,15 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             Log.w("Timebox", "Timebox already running, not starting a new one");
             return;
         }
+
+        if (StartlinesManager.isMusicModeOn(this)) {
+            showMusicModeAppChooserDialog(this, new onMusicAppSelectedListener() {
+                @Override
+                public void onAppSelected(String packageName) {
+                    StartlinesManager.saveBreakApp(getApplicationContext(), packageName);
+                }
+            });
+        }
         startTimebox(2);
     }
 
@@ -1042,7 +1059,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             clearTemporaryBlockList();
             timesStopButtonPressed = 0;
             recordTime("timeboxEnded");
-            openCalendarIfCheckInModeOn();
+            if (StartlinesManager.isMusicModeOn(this)) {
+                StartlinesManager.startSystemTimer(this);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> StartlinesManager.openBreakApp(this), 1500);
+            } else {
+                openCalendarIfCheckInModeOn();
+            }
             switchCalendarModeToOn();
             Log.d("Timebox", "Timebox stopped");
         } else {
@@ -1516,5 +1538,58 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         editor.remove("temporarilyUnblockedApps");
         editor.apply();
         Log.d("MainActivity", "Temporary block list cleared");
+    }
+
+    public static void showMusicModeAppChooserDialog(Context context, onMusicAppSelectedListener listener) {
+        Set<String> packageNames = StartlinesManager.getMusicApps(context);
+        PackageManager pm = context.getPackageManager();
+        List<ResolveInfo> appList = new ArrayList<>();
+
+        for (String packageName : packageNames) {
+            Intent intent = pm.getLaunchIntentForPackage(packageName);
+            if (intent != null) {
+                ResolveInfo resolveInfo = pm.resolveActivity(intent, 0);
+                if (resolveInfo != null) {
+                    appList.add(resolveInfo);
+                }
+            }
+        }
+
+        ArrayAdapter<ResolveInfo> adapter = new ArrayAdapter<ResolveInfo>(context, android.R.layout.select_dialog_item, appList) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = convertView;
+                if (view == null) {
+                    LayoutInflater inflater = LayoutInflater.from(context);
+                    view = inflater.inflate(android.R.layout.select_dialog_item, parent, false);
+                }
+
+                ResolveInfo info = getItem(position);
+                TextView textView = view.findViewById(android.R.id.text1);
+                ImageView imageView = view.findViewById(android.R.id.icon);
+
+                if (info != null) {
+                    textView.setText(info.loadLabel(pm));
+                    if (imageView != null) {
+                        imageView.setImageDrawable(info.loadIcon(pm));
+                    }
+                }
+
+                return view;
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Choose how you'll spend your break");
+        builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                ResolveInfo selectedInfo = appList.get(which);
+                String selectedPackage = selectedInfo.activityInfo.packageName;
+                listener.onAppSelected(selectedPackage);
+            }
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 }
