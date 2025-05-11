@@ -460,6 +460,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     Log.d("MainActivity", "Acknowledge button pressed");
                     incrementNotificationAcknowledgementCount();
                     break;
+                case "ACTION_START_BREAK_TIMER":
+                    Log.d("MainActivity", "Start Break Timer notification button pressed");
+                    if (!isWorking()) {
+                        startTimerAndOpenBreakApp();
+                    }
+                    break;
             }
         } else {
             Log.d("MainActivity", "onNewIntent called with intent: " + intent.getStringExtra("lineType"));
@@ -1060,8 +1066,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             timesStopButtonPressed = 0;
             recordTime("timeboxEnded");
             if (StartlinesManager.isMusicModeOn(this)) {
-                StartlinesManager.startSystemTimer(this);
-                new Handler(Looper.getMainLooper()).postDelayed(() -> StartlinesManager.openBreakApp(this), 1500);
+                startTimerAndOpenBreakApp();
             } else {
                 openCalendarIfCheckInModeOn();
             }
@@ -1071,6 +1076,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
             Log.w("Timebox", "Timebox is not running. Nothing to stop.");
         }
+    }
+
+    private void startTimerAndOpenBreakApp() {
+        StartlinesManager.startSystemTimer(this);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> StartlinesManager.openBreakApp(this), 1500);
     }
 
     public void snooze() {

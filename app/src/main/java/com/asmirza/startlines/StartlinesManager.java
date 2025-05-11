@@ -474,18 +474,14 @@ public class StartlinesManager {
         if (working && isAppDistracting(context, packageName) && !isAppTemporarilyUnblocked(context, packageName)) {
             Log.d("StartlinesManager Blocker", "Distracting app detected, blocking: " + packageName);
             // For blocking distracting apps when working
-            if (isMusicModeOnAndAppNotPlayingMedia(context)) {
-                openRandomMusicApp(context);
-            } else {
-                blockDistractingApp(context, packageName);
-            }
+            blockDistractingApp(context, packageName);
         } else if (!working && isAppBlocked(context, packageName)) {
             Log.d("AppBlockingAccessiblityService", "Blocked app detected: " + packageName);
             if (isAppBlockingModeOn(context)) {
                 blockApp(context, packageName);
             } else if (isMusicModeOnAndAppNotPlayingMedia(context)) {
                 Log.d("StartlinesManager Blocker", "Music mode on and no music app playing media");
-                openRandomMusicApp(context);
+                NotificationHelper.showBreakSuggestionNotification(context);
             }
         }
     }

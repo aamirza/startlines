@@ -30,6 +30,7 @@ public class NotificationHelper {
     private static final int START_TIMER_REQUEST_CODE = 12;
     private static final int SNOOZE_REQUEST_CODE = 13;
     private static final int STOP_TIMER_REQUEST_CODE = 14;
+    private static final int START_BREAK_TIMER_REQUEST_CODE = 16;
 
 
 
@@ -219,5 +220,42 @@ public class NotificationHelper {
     public static void cancelTimerNotification(Context context) {
         NotificationManagerCompat.from(context).cancel(TIMER_NOTIFICATION_ID);
         Log.d("NotificationHelper", "Timer notification cancelled");
+    }
+
+    public static void showBreakSuggestionNotification(Context context) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            Log.w("NotificationHelper", "Notification permission not granted");
+            return;
+        }
+
+        Intent startBreakIntent = new Intent(context, MainActivity.class);
+        startBreakIntent.setAction("ACTION_START_BREAK_TIMER"); // already handled by your MainActivity
+        PendingIntent startBreakPendingIntent = PendingIntent.getActivity(
+                context,
+                START_BREAK_TIMER_REQUEST_CODE,
+                startBreakIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        Intent openAppIntent = new Intent(context, MainActivity.class);
+        PendingIntent openAppPendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle("Get more steps")
+                .setContentText("Put on some music or a podcast — just 2 minutes can reset your mind.")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(openAppPendingIntent)
+                .addAction(R.drawable.ic_launcher_foreground, "Start for 2 Minutes", startBreakPendingIntent)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat.from(context).notify(4451, builder.build());
     }
 }
