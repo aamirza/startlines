@@ -1057,7 +1057,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             stopTickingSound();
             setWorkingStatusToFalse();
             StartlinesManager.sendStartlineMessageToServer(this);
-            switchMusicModeToOn();
             updatePermanentNotification();
             clearTimebox();
             deleteOldTimeboxes();
@@ -1088,7 +1087,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             startlineSnoozer = () -> {
                 setStartlineStatus("1");
                 if (!isWorking()) {
-                    switchMusicModeToOn();
                     clearTimeboxStatusText();
                 }
 
@@ -1097,7 +1095,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             startlineSnoozer = () -> {
                 setFunlineStatus("1");
                 if (!isWorking()) {
-                    switchMusicModeToOn();
                     clearTimeboxStatusText();
                 }
             };
