@@ -186,7 +186,7 @@
             tools:ignore="UseSwitchCompatOrMaterialXml" />
 
         <Switch
-            android:id="@+id/music_mode_switch"
+            android:id="@+id/headphone_task_switch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="0dp"
@@ -194,7 +194,7 @@
             android:layout_marginEnd="0dp"
             android:checked="true"
             android:minHeight="48dp"
-            android:text="@string/music_mode_switch_text"
+            android:text="@string/headphone_task_switch_text"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
 
         <Switch

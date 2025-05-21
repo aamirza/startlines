@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         loadStatuses();
         addTextChangeListener();
         funModeSwitchListener();
-        musicModeSwitchListener();
+        headphoneModeSwitchListener();
         calendarModeSwitchListener();
         setupStartButton();
         setupStopButton();
@@ -305,11 +305,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         });
     }
 
-    private void musicModeSwitchListener() {
-        Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
+    private void headphoneModeSwitchListener() {
+        Switch headphoneModeSwitch = findViewById(R.id.headphone_task_switch);
 
-        musicModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            StartlinesManager.setMusicMode(this, isChecked);
+        headphoneModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            StartlinesManager.setHeadphoneMode(this, isChecked);
         });
     }
 
@@ -533,7 +533,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         notificationScore.setText(acknowledged + " / " + shown + " (" + String.format("%.1f", percentage) + "%)");
     }
 
-    public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode, boolean musicMode, boolean calendarMode, Set<String> tasks) {
+    public void saveStatuses(String startlineStatus, String funlineStatus, String taskName, boolean funMode, boolean headphoneMode, boolean calendarMode, Set<String> tasks) {
         /* Save Startlines, Funline, and Task Name in case of reboot or app close */
         SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -543,7 +543,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         editor.putString("taskName", taskName);
         editor.putBoolean("funMode", funMode);
         editor.putInt("startlinesMissed", startlinesMissed);
-        editor.putBoolean("musicMode", musicMode);
+        editor.putBoolean("headphoneMode", headphoneMode);
         editor.putBoolean("calendarMode", calendarMode);
         editor.putStringSet("tasks", tasks);
 
@@ -560,14 +560,14 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             String taskName = sharedPreferences.getString("taskName", "");
             boolean funMode = sharedPreferences.getBoolean("funMode", false);
             startlinesMissed = sharedPreferences.getInt("startlinesMissed", 0);
-            boolean musicMode = sharedPreferences.getBoolean("musicMode", true);
+            boolean headphoneMode = sharedPreferences.getBoolean("headphoneMode", true);
             boolean calendarMode = sharedPreferences.getBoolean("calendarMode", false);
 
             TextView startlineStatusTextView = findViewById(R.id.startline_status);
             TextView funlineStatusTextView = findViewById(R.id.funline_status);
             TextInputEditText taskNameTextView = findViewById(R.id.task_name);
             Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
-            Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
+            Switch headphoneModeSwitch = findViewById(R.id.headphone_task_switch);
             Switch calendarModeSwitch = findViewById(R.id.calendar_mode_switch);
 
 
@@ -575,7 +575,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             funlineStatusTextView.setText(funlineStatus);
             taskNameTextView.setText(taskName);
             funModeSwitch.setChecked(funMode);
-            musicModeSwitch.setChecked(musicMode);
+            headphoneModeSwitch.setChecked(headphoneMode);
             calendarModeSwitch.setChecked(calendarMode);
         } catch (Exception e) {
             saveStatuses("0", "0", "", false, true, true, new HashSet<>());
@@ -645,7 +645,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         TextView funlineStatusTextView = findViewById(R.id.funline_status);
         TextInputEditText taskNameTextView = findViewById(R.id.task_name);
         Switch funModeSwitch = findViewById(R.id.fun_mode_switch);
-        Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
+        Switch headphoneModeSwitch = findViewById(R.id.headphone_task_switch);
         Switch calendarModeSwitch = findViewById(R.id.calendar_mode_switch);
 
 
@@ -653,11 +653,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         String funlineStatus = funlineStatusTextView.getText().toString();
         String taskName = taskNameTextView.getText().toString();
         boolean funMode = funModeSwitch.isChecked();
-        boolean musicMode = musicModeSwitch.isChecked();
+        boolean headphoneMode = headphoneModeSwitch.isChecked();
         boolean calendarMode = calendarModeSwitch.isChecked();
         Set<String> taskSet = getTasksAsSet();
 
-        saveStatuses(startlineStatus, funlineStatus, taskName, funMode, musicMode, calendarMode, taskSet);
+        saveStatuses(startlineStatus, funlineStatus, taskName, funMode, headphoneMode, calendarMode, taskSet);
     }
 
     private void saveWorkingStatus() {
@@ -986,14 +986,13 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             return;
         }
 
-        if (StartlinesManager.isMusicModeOn(this)) {
-            showMusicModeAppChooserDialog(this, new onMusicAppSelectedListener() {
-                @Override
-                public void onAppSelected(String packageName) {
-                    StartlinesManager.saveBreakApp(getApplicationContext(), packageName);
-                }
-            });
-        }
+
+        showMusicModeAppChooserDialog(this, new onMusicAppSelectedListener() {
+            @Override
+            public void onAppSelected(String packageName) {
+                StartlinesManager.saveBreakApp(getApplicationContext(), packageName);
+            }
+        });
         startTimebox(2);
     }
 
@@ -1028,7 +1027,13 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         setTimeboxStatusText(currentTimeboxDuration + " (" + endTimeFormatted + ")");
         Log.d("Timebox", "Timebox started for " + currentTimeboxDuration + " minutes, ending at " + endTimeFormatted);
 
-        openCalendarIfCheckInModeOn();
+
+        if (StartlinesManager.isHeadphoneModeOn(this) && !StartlinesManager.isMusicModeAppPlayingMedia(this)) {
+            StartlinesManager.openBreakApp(this);
+        } else {
+            openCalendarIfCheckInModeOn();
+        }
+
         setNotificationAcknowledgementScore();
 
         // Set Startlines to "1" after timebox completion and start the new timebox
@@ -1106,13 +1111,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             handler.postDelayed(startlineSnoozer, twoMinutes);
         } else {
             Log.w("Timebox", "No startline or funline to snooze");
-        }
-    }
-
-    private void switchMusicModeToOn() {
-        Switch musicModeSwitch = findViewById(R.id.music_mode_switch);
-        if (!musicModeSwitch.isChecked()) {
-            musicModeSwitch.setChecked(true);
         }
     }
 
@@ -1548,6 +1546,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     }
 
     public static void showMusicModeAppChooserDialog(Context context, onMusicAppSelectedListener listener) {
+        StartlinesManager.setMusicMode(context, false);
         Set<String> packageNames = StartlinesManager.getMusicApps(context);
         PackageManager pm = context.getPackageManager();
         List<ResolveInfo> appList = new ArrayList<>();
@@ -1593,6 +1592,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             public void onClick(DialogInterface dialog, int which) {
                 ResolveInfo selectedInfo = appList.get(which);
                 String selectedPackage = selectedInfo.activityInfo.packageName;
+                StartlinesManager.setMusicMode(context, true);
                 listener.onAppSelected(selectedPackage);
             }
         });

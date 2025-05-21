@@ -111,6 +111,15 @@ public class StartlinesManager {
         setMusicMode(context, true);
     }
 
+    public static void setHeadphoneMode(Context context, boolean headphoneMode) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putBoolean("headphoneMode", headphoneMode);
+        Log.d("StartlineManager", "Headphone mode set: " + headphoneMode);
+        editor.apply();
+    }
+
     public static void setCalendarMode(Context context, boolean calendarMode) {
         SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
@@ -152,6 +161,13 @@ public class StartlinesManager {
         boolean musicMode = prefs.getBoolean("musicMode", false);
         Log.d("StartlinesManager", "Music mode: " + musicMode);
         return musicMode;
+    }
+
+    public static boolean isHeadphoneModeOn(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        boolean headphoneMode = prefs.getBoolean("headphoneMode", false);
+        Log.d("StartlinesManager", "Headphone mode: " + headphoneMode);
+        return headphoneMode;
     }
 
     public static boolean isTickingSoundPlaying(Context context) {
@@ -440,8 +456,13 @@ public class StartlinesManager {
     }
 
     public static void blockDistractingApp(Context context, String packageName) {
+        // For blocking apps when working
         Log.d("StartlinesManager", "Conditions for blocking distracting app met: " + packageName);
-        openCalendarApp(context);
+        if (isMusicModeOnAndAppNotPlayingMedia(context)) {
+            openBreakApp(context);
+        } else {
+            openCalendarApp(context);
+        }
     }
 
     public static void openStartlinesApp(Context context) {
