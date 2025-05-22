@@ -247,6 +247,15 @@ public class NotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        Intent stopNotificationIntent = new Intent(context, MainActivity.class);
+        stopNotificationIntent.setAction("ACTION_STOP_BREAK_SUGGESTIONS");
+        PendingIntent stopNotificationPendingIntent = PendingIntent.getActivity(
+                context,
+                4452,
+                stopNotificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("Get more steps")
@@ -254,6 +263,7 @@ public class NotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(openAppPendingIntent)
                 .addAction(R.drawable.ic_launcher_foreground, "Start for 2 Minutes", startBreakPendingIntent)
+                .addAction(R.drawable.ic_launcher_foreground, "Stop Notifying", stopNotificationPendingIntent)
                 .setAutoCancel(true);
 
         NotificationManagerCompat.from(context).notify(4451, builder.build());

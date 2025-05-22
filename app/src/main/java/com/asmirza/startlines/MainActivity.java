@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -465,6 +466,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     if (!isWorking()) {
                         startTimerAndOpenBreakApp();
                     }
+                    break;
+                case "ACTION_STOP_BREAK_SUGGESTIONS":
+                    Log.d("MainActivity", "Stop Break Suggestions notification button pressed");
+                    StartlinesManager.setBreakSuggestionsSilenced(this, true);
+                    NotificationManagerCompat.from(this).cancel(4451);
                     break;
             }
         } else {
@@ -993,6 +999,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 StartlinesManager.saveBreakApp(getApplicationContext(), packageName);
             }
         });
+        StartlinesManager.setBreakSuggestionsSilenced(this, false);
         startTimebox(2);
     }
 

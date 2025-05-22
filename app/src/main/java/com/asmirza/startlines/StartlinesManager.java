@@ -500,7 +500,7 @@ public class StartlinesManager {
             Log.d("AppBlockingAccessiblityService", "Blocked app detected: " + packageName);
             if (isAppBlockingModeOn(context)) {
                 blockApp(context, packageName);
-            } else if (isMusicModeOnAndAppNotPlayingMedia(context)) {
+            } else if (isMusicModeOnAndAppNotPlayingMedia(context) && !StartlinesManager.isBreakSuggestionsSilenced(context)) {
                 Log.d("StartlinesManager Blocker", "Music mode on and no music app playing media");
                 NotificationHelper.showBreakSuggestionNotification(context);
             }
@@ -613,6 +613,18 @@ public class StartlinesManager {
     public static void sendStartlineMessageToServer(Context context) {
         Log.d("MainActivity", "Sending status message to server");
         SocketClient.sendMessageToServer(createStatusMessage(context), getIpAddress(context), getPort(context));
+    }
+
+    public static void setBreakSuggestionsSilenced(Context context, boolean silenced) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("breakSuggestionsSilenced", silenced);
+        editor.apply();
+    }
+
+    public static boolean isBreakSuggestionsSilenced(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getBoolean("breakSuggestionsSilenced", false);
     }
 
     /*********************** Timebox related code ************************/
