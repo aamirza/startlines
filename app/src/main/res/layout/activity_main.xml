@@ -222,7 +222,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/notificationScoreText"
+        app:layout_constraintTop_toBottomOf="@+id/calendarFreshnessScoreText"
         tools:listitem="@layout/task_item" />
 
     <TextView
@@ -247,24 +247,24 @@
         app:layout_constraintTop_toTopOf="@+id/complianceScoreText" />
 
     <TextView
-        android:id="@+id/notificationScoreText"
+        android:id="@+id/calendarFreshnessScoreText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginTop="4dp"
-        android:text="Notification Acknowledgement:"
+        android:text="Calendar Freshness Score:"
         android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/complianceScore" />
 
     <TextView
-        android:id="@+id/notificationScore"
+        android:id="@+id/calendarFreshnessScore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:text="0 / 0 (0%)"
+        android:text="+0"
         android:textSize="12sp"
-        app:layout_constraintStart_toEndOf="@+id/notificationScoreText"
-        app:layout_constraintTop_toTopOf="@+id/notificationScoreText" />
+        app:layout_constraintStart_toEndOf="@+id/calendarFreshnessScoreText"
+        app:layout_constraintTop_toTopOf="@+id/calendarFreshnessScoreText" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

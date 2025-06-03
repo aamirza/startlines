@@ -63,4 +63,10 @@
         app:showAsAction="never"
         android:orderInCategory="50" />
 
+    <item
+        android:id="@+id/calendar_freshness"
+        android:title="Log Calendar Change"
+        app:showAsAction="never"
+        android:orderInCategory="110" />
+
 </menu>
