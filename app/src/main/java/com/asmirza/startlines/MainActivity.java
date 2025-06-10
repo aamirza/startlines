@@ -489,15 +489,25 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         }
     }
 
+    private boolean wasTimerNotificationAcknowledged() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getBoolean("timerNotificationAcknowledged", false);
+    }
+
+    private void setTimerNotificationAcknowledged(boolean acknowledged) {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        prefs.edit().putBoolean("timerNotificationAcknowledged", acknowledged).apply();
+    }
+
     private void incrementNotificationAcknowledgementCount() {
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        if (!prefs.getBoolean("timerNotificationAcknowledged", false)) {
+        if (!wasTimerNotificationAcknowledged()) {
             String today = LocalDate.now().toString();
             String acknowledgementKey = "acknowledged_" + today;
 
             int count = prefs.getInt(acknowledgementKey, 0);
             prefs.edit().putInt(acknowledgementKey, count + 1).apply();
-            prefs.edit().putBoolean("timerNotificationAcknowledged", true).apply();
+            setTimerNotificationAcknowledged(true);
             setNotificationAcknowledgementScore();
             Log.d("MainActivity", "Acknowledgement count incremented to: " + (count + 1));
         }
@@ -1049,6 +1059,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             timeboxComplete();
             if (isTimeLimitPassed()) {
                 Log.d("Timebox", "Time limit reached, stopping timebox");
+                stopTimebox();
+                return;
+            } else if (!wasTimerNotificationAcknowledged()) {
+                Log.d("Timebox", "Timer notification not acknowledged, stopping timebox");
                 stopTimebox();
                 return;
             }
