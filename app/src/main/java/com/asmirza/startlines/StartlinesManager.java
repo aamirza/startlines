@@ -368,6 +368,11 @@ public class StartlinesManager {
                 startVibrationLoop(context);
                 startMusicPauseLoop(context);
                 NotificationHelper.showXModeNotification(context, getStartlineStatus(context).equals("X"));
+                if (!autoStartHappened(context)) {
+                    // Start timebox automatically
+                    Log.d("StartlinesManager", "Auto starting timebox as part of X mode");
+                    autoStart(context);
+                }
             }
             scheduleStartlineChecker(context,5, lineType);
         } else if (status.equals("1")) {
@@ -499,6 +504,9 @@ public class StartlinesManager {
         } else if (!working && isAppBlocked(context, packageName)) {
             Log.d("AppBlockingAccessiblityService", "Blocked app detected: " + packageName);
             if (isAppBlockingModeOn(context)) {
+                if (!autoStartHappened(context)) {
+                    autoStart(context);
+                }
                 blockApp(context, packageName);
             } else if (isMusicModeOnAndAppNotPlayingMedia(context) && !StartlinesManager.isBreakSuggestionsSilenced(context)) {
                 Log.d("StartlinesManager Blocker", "Music mode on and no music app playing media");
@@ -718,5 +726,46 @@ public class StartlinesManager {
 
         Log.d("WifiChecker", "Connected to an indoor WiFi: " + currentSSID);
         return false; // Connected to an indoor WiFi
+    }
+
+    /*********************** Code related to autostarting ************************/
+
+    public static boolean autoStartHappened(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getBoolean("autoStartHappened", false);
+    }
+
+    public static void setAutoStartHappened(Context context, boolean happened) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("autoStartHappened", happened);
+        editor.apply();
+    }
+
+    public static void setAutoStartHappened(Context context) {
+        setAutoStartHappened(context, true);
+        Log.d("StartlinesManager", "Auto start happened set to true");
+    }
+
+    public static void resetAutoStartHappened(Context context) {
+        setAutoStartHappened(context, false);
+        Log.d("StartlinesManager", "Auto start happened reset");
+    }
+
+    public static void autoStart(Context context) {
+        Log.d("StartlinesManager", "Auto starting timebox from StartlinesManager" );
+        Intent startTimeboxIntent = new Intent(context, MainActivity.class);
+        startTimeboxIntent.setAction("ACTION_START_TIMER");
+        startTimeboxIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(startTimeboxIntent);
+    }
+
+    public static void autoStartIfNotHappened(Context context) {
+        if (!autoStartHappened(context)) {
+            Log.d("StartlinesManager", "Auto start not happened, starting timebox");
+            autoStart(context);
+        } else {
+            Log.d("StartlinesManager", "Auto start already happened, not starting timebox");
+        }
     }
 }

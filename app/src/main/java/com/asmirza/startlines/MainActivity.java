@@ -401,7 +401,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         /* This will execute when the StartlineCheckerReceiver sends an intent to this activity */
         // Also used for notification action buttons
 
-        Log.d("MainActivity", "onNewIntent called");
+        Log.d("MainActivity", "onNewIntent called with intent: " + intent.getAction());
 
         super.onNewIntent(intent);
         setIntent(intent); // Important: update the activity's intent
@@ -432,10 +432,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 case "ACTION_START_TIMER":
                     Log.d("MainActivity", "Start Timer notification button pressed");
                     if (!isWorking()) {
-                        if (getStartlineStatus() == "X") {
+                        if (getStartlineStatus().equals("X")) {
                             switchFunModeToOn(false);
                             startTimebox();
-                        } else if (getFunlineStatus() == "X") {
+                        } else if (getFunlineStatus().equals("X")) {
                             switchFunModeToOn(true);
                             startTimebox();
                         } else {
@@ -1008,6 +1008,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         /* For starting the 2 minute staircase timeboxes when the start button is pressed */
 
         setWorkingStatusToTrue();
+        StartlinesManager.resetAutoStartHappened(this);
         int timeboxDurationInMillis = currentTimeboxDuration * 60 * 1000;
         long endTimeInMillis = timestampMinutesFromNow(currentTimeboxDuration);
         StartlinesManager.sendStartlineMessageToServer(this);
@@ -1047,7 +1048,14 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         // Set Startlines to "1" after timebox completion and start the new timebox
 
         timeboxRunnable = () -> {
-            timeboxComplete();
+            boolean twoMinuteTimeboxWentUnacknowledged = currentTimeboxDuration == 2 && !wasTimerNotificationAcknowledged();
+            if (!twoMinuteTimeboxWentUnacknowledged) {
+                timeboxComplete();
+            } else {
+                Log.d("Timebox", "Two minute timebox went unacknowledged, not completing timebox");
+                StartlinesManager.setAutoStartHappened(this);
+            }
+
             if (isTimeLimitPassed()) {
                 Log.d("Timebox", "Time limit reached, stopping timebox");
                 stopTimebox();
