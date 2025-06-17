@@ -986,15 +986,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     }
 
     public void startTimebox() {
-        // don't allow start if timebox hasn't been updated
-        if (getRecordedTime("timeboxEnded") > getRecordedTime("manageTimeboxButtonPressed")) {
-            Toast.makeText(this, "Record whether the previous timebox was schedule compliant.", Toast.LENGTH_SHORT).show();
-            Log.d("MainActivity", "Starting timebox prevented. Previous timebox not updated." +
-                    " Previous timebox started: " + getRecordedTime("timeboxStarted") +
-                    " Previous timebox ended: " + getRecordedTime("timeboxEnded"));
-            return;
-        }
-
 
         if (isWorking()) {
             Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
