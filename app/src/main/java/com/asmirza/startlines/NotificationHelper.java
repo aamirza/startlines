@@ -173,6 +173,15 @@ public class NotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        Intent calendarVisibilityIntent = new Intent(context, MainActivity.class);
+        calendarVisibilityIntent.setAction("ACTION_CALENDAR_VISIBILITY_NOTIFICATION");
+        PendingIntent calendarVisibilityPendingIntent = PendingIntent.getActivity(
+                context,
+                752148095,
+                calendarVisibilityIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         StringBuilder contextText = new StringBuilder();
         contextText.append(minutesRunning)
                 .append(" minutes ")
@@ -191,6 +200,7 @@ public class NotificationHelper {
                 .setContentText(contextText.toString())
                 .addAction(R.drawable.ic_launcher_foreground, "Stop Timer", stopTimerPendingIntent)
                 .addAction(R.drawable.ic_launcher_foreground, "Acknowledge", acknowledgePendingIntent)
+                .addAction(R.drawable.ic_launcher_foreground, "Calendar Visible", calendarVisibilityPendingIntent)
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(contextText.toString()))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
