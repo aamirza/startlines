@@ -481,6 +481,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     StartlinesManager.setBreakSuggestionsSilenced(this, true);
                     NotificationManagerCompat.from(this).cancel(4451);
                     break;
+                case "ACTION_CALENDAR_VISIBILITY_NOTIFICATION":
+                    Log.d("MainActivity", "Calendar visibility notification button pressed");
+                    markCalendarVisible();
+                    break;
             }
         } else {
             Log.d("MainActivity", "onNewIntent called with intent: " + intent.getStringExtra("lineType"));
@@ -496,6 +500,25 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 }
             }
         }
+    }
+
+    private void markCalendarVisible() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        long currentTime = System.currentTimeMillis();
+        long minutes = 30;
+        long calendarVisibleTime = currentTime + (minutes * 60 * 1000);
+        editor.putLong("lastCalendarVisibleTime", calendarVisibleTime);
+        editor.apply();
+    }
+
+    private long getLastTimeCalendarMarkedVisible() {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getLong("lastCalendarVisibleTime", 0);
+    }
+
+    public boolean isCalendarLikelyVisible() {
+        return System.currentTimeMillis() < getLastTimeCalendarMarkedVisible();
     }
 
     private boolean wasTimerNotificationAcknowledged() {
@@ -1071,6 +1094,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 return;
             } else if (!wasTimerNotificationAcknowledged()) {
                 Log.d("Timebox", "Timer notification not acknowledged, stopping timebox");
+                stopTimebox();
+                return;
+            } else if (!isCalendarLikelyVisible()) {
+                Log.d("Timebox", "Calendar not likely visible, stopping timebox");
                 stopTimebox();
                 return;
             }
