@@ -62,5 +62,4 @@
         android:title="@string/indoor_wifi_settings_menu_button"
         app:showAsAction="never"
         android:orderInCategory="50" />
-
 </menu>

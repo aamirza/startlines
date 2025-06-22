@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -133,6 +134,14 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
         //scheduleStartlineChecker(1, "startline");  // for testing, will schedule Startline in 1 minute
     }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        Log.d("Config", "Configuration changed: " + newConfig.toString());
+    }
+
 
     private void setupTaskList() {
         taskInput = findViewById(R.id.task_name);
