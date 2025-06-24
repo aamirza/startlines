@@ -368,11 +368,8 @@ public class StartlinesManager {
                 startVibrationLoop(context);
                 startMusicPauseLoop(context);
                 NotificationHelper.showXModeNotification(context, getStartlineStatus(context).equals("X"));
-                if (!autoStartHappened(context)) {
-                    // Start timebox automatically
-                    Log.d("StartlinesManager", "Auto starting timebox as part of X mode");
-                    autoStart(context);
-                }
+                Log.d("StartlinesManager", "Auto starting timebox as part of X mode");
+                autoStartIfNotHappened(context);
             }
             scheduleStartlineChecker(context,5, lineType);
         } else if (status.equals("1")) {
@@ -504,9 +501,7 @@ public class StartlinesManager {
         } else if (!working && isAppBlocked(context, packageName)) {
             Log.d("AppBlockingAccessiblityService", "Blocked app detected: " + packageName);
             if (isAppBlockingModeOn(context)) {
-                if (!autoStartHappened(context)) {
-                    autoStart(context);
-                }
+                autoStartIfNotHappened(context);
                 blockApp(context, packageName);
             } else if (isMusicModeOnAndAppNotPlayingMedia(context) && !StartlinesManager.isBreakSuggestionsSilenced(context)) {
                 Log.d("StartlinesManager Blocker", "Music mode on and no music app playing media");
@@ -757,15 +752,27 @@ public class StartlinesManager {
         Intent startTimeboxIntent = new Intent(context, MainActivity.class);
         startTimeboxIntent.setAction("ACTION_START_TIMER");
         startTimeboxIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        setAutoStartRecentlyAttempted(context);
         context.startActivity(startTimeboxIntent);
     }
 
     public static void autoStartIfNotHappened(Context context) {
-        if (!autoStartHappened(context)) {
+        if (!autoStartHappened(context) && !wasAutoStartRecentlyAttempted(context)) {
             Log.d("StartlinesManager", "Auto start not happened, starting timebox");
             autoStart(context);
         } else {
             Log.d("StartlinesManager", "Auto start already happened, not starting timebox");
         }
+    }
+
+    public static void setAutoStartRecentlyAttempted(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        prefs.edit().putLong("lastAutoStartTime", System.currentTimeMillis()).apply();
+    }
+
+    public static boolean wasAutoStartRecentlyAttempted(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        long lastTime = prefs.getLong("lastAutoStartTime", 0);
+        return System.currentTimeMillis() - lastTime < 10_000;  // 10 second cooldown
     }
 }
