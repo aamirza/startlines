@@ -23,6 +23,7 @@ import android.os.Vibrator;
 import android.provider.AlarmClock;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -503,11 +504,18 @@ public class StartlinesManager {
             if (isAppBlockingModeOn(context)) {
                 autoStartIfNotHappened(context);
                 blockApp(context, packageName);
+            } else if (getRecordedTime(context, "timeboxEnded") > getRecordedTime(context, "manageTimeboxButtonPressed")) {
+                Toast.makeText(context, "Record whether the previous timebox was schedule compliant.", Toast.LENGTH_SHORT).show();
+                Log.d("MainActivity", "Starting timebox prevented. Previous timebox not updated." +
+                        " Previous timebox started: " + getRecordedTime(context, "timeboxStarted") +
+                        " Previous timebox ended: " + getRecordedTime(context, "timeboxEnded"));
+                blockApp(context, packageName);
+            }
+
             } else if (isMusicModeOnAndAppNotPlayingMedia(context) && !StartlinesManager.isBreakSuggestionsSilenced(context)) {
                 Log.d("StartlinesManager Blocker", "Music mode on and no music app playing media");
                 NotificationHelper.showBreakSuggestionNotification(context);
             }
-        }
     }
 
     /*********************** Music-mode related code ************************/
@@ -774,5 +782,18 @@ public class StartlinesManager {
         SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         long lastTime = prefs.getLong("lastAutoStartTime", 0);
         return System.currentTimeMillis() - lastTime < 10_000;  // 10 second cooldown
+    }
+
+    private static void recordTime(Context context, String sharedPreferenceName) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        long currentTime = System.currentTimeMillis();
+        editor.putLong(sharedPreferenceName, currentTime);
+        editor.apply();
+    }
+
+    private static long getRecordedTime(Context context, String sharedPreferenceName) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return sharedPreferences.getLong(sharedPreferenceName, 0);
     }
 }
