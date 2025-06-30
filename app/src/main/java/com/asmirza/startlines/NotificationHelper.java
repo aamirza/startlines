@@ -200,10 +200,16 @@ public class NotificationHelper {
                 .setContentText(contextText.toString())
                 .addAction(R.drawable.ic_launcher_foreground, "Stop Timer", stopTimerPendingIntent)
                 .addAction(R.drawable.ic_launcher_foreground, "Acknowledge", acknowledgePendingIntent)
-                .addAction(R.drawable.ic_launcher_foreground, "Calendar Knowledge", calendarVisibilityPendingIntent)
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(contextText.toString()))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        // if 30+ minutes ago
+        if (StartlinesManager.calendarVisibilityNotificationShouldShow(context)) {
+            builder.addAction(R.drawable.ic_launcher_foreground, "Know Calendar", calendarVisibilityPendingIntent);
+        } else {
+            Log.d("NotificationHelper", "Calendar visibility notification not shown");
+        }
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)

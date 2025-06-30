@@ -509,7 +509,7 @@ public class StartlinesManager {
                 Log.d("MainActivity", "Starting timebox prevented. Previous timebox not updated." +
                         " Previous timebox started: " + getRecordedTime(context, "timeboxStarted") +
                         " Previous timebox ended: " + getRecordedTime(context, "timeboxEnded"));
-                blockApp(context, packageName);
+                openCalendarApp(context);
             }
 
             } else if (isMusicModeOnAndAppNotPlayingMedia(context) && !StartlinesManager.isBreakSuggestionsSilenced(context)) {
@@ -795,5 +795,31 @@ public class StartlinesManager {
     private static long getRecordedTime(Context context, String sharedPreferenceName) {
         SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         return sharedPreferences.getLong(sharedPreferenceName, 0);
+    }
+
+
+
+    public static void markCalendarVisible(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        long currentTime = System.currentTimeMillis();
+        long minutes = 60;
+        long calendarVisibleTime = currentTime + (minutes * 60 * 1000);
+        editor.putLong("lastCalendarVisibleTime", calendarVisibleTime);
+        editor.apply();
+    }
+
+    public static long getLastTimeCalendarMarkedVisible(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getLong("lastCalendarVisibleTime", 0);
+    }
+
+    public static boolean isCalendarLikelyVisible(Context context) {
+        return System.currentTimeMillis() < getLastTimeCalendarMarkedVisible(context);
+    }
+
+    public static boolean calendarVisibilityNotificationShouldShow(Context context) {
+        // it should show if there's less than 30 minutes left until calendar visibility expires
+        return System.currentTimeMillis() + (30 * 60 * 1000) > getLastTimeCalendarMarkedVisible(context);
     }
 }
