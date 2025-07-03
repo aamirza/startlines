@@ -16,6 +16,7 @@ import android.Manifest;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -50,6 +51,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -253,8 +255,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             startActivity(intent);
             return true;
         } else if (item.getItemId() == R.id.force_startlines) {
-            executeStartline("startline");
-            StartlinesManager.executeStartlines(this, "startline");
+            showTimePicker(this);
             return true;
         } else if (item.getItemId() == R.id.indoor_wifi_settings) {
             startActivity(new Intent(this, IndoorWifiSelectionActivity.class));
@@ -286,6 +287,27 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
         }
     }
+
+    public void showTimePicker(Context context) {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                context,
+                (TimePicker view, int selectedHour, int selectedMinute) -> {
+                    scheduleStartlines(selectedHour, selectedMinute, LineType.STARTLINE);
+                    String message = "Startline scheduled for " + selectedHour + ":" + String.format("%02d", selectedMinute);
+                    Log.d("MainActivity", message);
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+                },
+                hour,
+                minute,
+                true
+        );
+
+        timePickerDialog.show();
+    };
 
     private void updatePermanentNotification() {
         NotificationHelper.showPermanentNotification(this, getStartlineStatus(), getFunlineStatus());
@@ -943,35 +965,13 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         int hoursInADay = 24;
         for (int i = 0; i < hoursInADay; i++) {
             for (int minute : startlineMinutes) {
-                calendar.set(Calendar.HOUR_OF_DAY, i);
-                calendar.set(Calendar.MINUTE, minute);
-                calendar.set(Calendar.SECOND, 0);
-                calendar.set(Calendar.MILLISECOND, 0);
-
-                long alarmTimeInMillis = calendar.getTimeInMillis();
-
-                if (alarmTimeInMillis < System.currentTimeMillis()) {
-                    Log.d("Scheduler", "Alarm time is in the past, skipping: " + calendar.getTime().toString());
-                    continue;
-                }
-
-                String lineType;
+                LineType lineType;
                 if (minute % funlineInterval == 0) {  // if it is divisible by 30 (funlineInterval)
-                    lineType = "funline";
+                    lineType = LineType.STARTLINE;
                 } else {
-                    lineType = "startline";
+                    lineType = LineType.FUNLINE;
                 }
-
-                Intent intent = new Intent(this, StartlineCheckerReceiver.class);
-                int requestCode = Integer.parseInt(String.valueOf(i*60 + minute));
-                intent.putExtra("lineType", lineType);
-                intent.putExtra("requestCode", requestCode);
-                // create a time using i and minute then convert to int
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-                alarmPendingIntents.add(pendingIntent);
-                Log.d("Scheduler", "Next alarm set for " + lineType + " at " + calendar.getTime().toString());
+                scheduleStartlines(i, minute, lineType);
             }
         }
 
@@ -996,6 +996,33 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, alarmTimeInMillis, AlarmManager.INTERVAL_DAY, pendingIntent);
         Log.d("Scheduler", "Midnight alarm set for " + calendar.getTime().toString() + " and set to repeat after that");
+    }
+
+    private void scheduleStartlines(int hour, int minute, LineType lineType) {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, minute);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        long alarmTimeInMillis = calendar.getTimeInMillis();
+
+        if (alarmTimeInMillis < System.currentTimeMillis()) {
+            Log.d("Scheduler", "Alarm time is in the past, skipping: " + calendar.getTime().toString());
+            return;
+        }
+
+        Intent intent = new Intent(this, StartlineCheckerReceiver.class);
+        int requestCode = Integer.parseInt(String.valueOf(hour*60 + minute));
+        intent.putExtra("lineType", lineType.toString());
+        intent.putExtra("requestCode", requestCode);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        alarmPendingIntents.add(pendingIntent);
+        Log.d("Scheduler", "Next alarm set for " + lineType + " at " + calendar.getTime().toString());
     }
 
     public void startTimebox() {
