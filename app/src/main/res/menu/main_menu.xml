@@ -62,4 +62,9 @@
         android:title="@string/indoor_wifi_settings_menu_button"
         app:showAsAction="never"
         android:orderInCategory="50" />
+    <item
+        android:id="@+id/drive_mode"
+        android:title="Drive Mode"
+        app:showAsAction="never"
+        android:orderInCategory="130" />
 </menu>

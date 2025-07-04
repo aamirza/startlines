@@ -72,6 +72,7 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskAdapterCallback {
     private boolean workingStatus = false;  // 0 if timebox is not running, 1 if timebox is running
+    private boolean driveMode = false;  // true if you want to stop calendar acknowledgements/testing
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private Runnable startlineSnoozer; // will be used to snooze startlines
@@ -263,6 +264,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.snooze_startlines) {
             snooze();
             Log.d("MainActivity", "Snooze Startlines button pressed");
+            return true;
+        } else if (item.getItemId() == R.id.drive_mode) {
+            setDriveModeToTrue();
+            Log.d("MainActivity", "Drive mode set to on");
             return true;
         }
 
@@ -934,6 +939,20 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         saveWorkingStatus();
     }
 
+    private void setDriveModeToTrue() {
+        driveMode = true;
+        Log.d("MainActivity", "Drive mode set to true");
+    }
+
+    private void setDriveModeToFalse() {
+        driveMode = false;
+        Log.d("MainActivity", "Drive mode set to false");
+    }
+
+    private boolean isDriveModeOn() {
+        return driveMode;
+    }
+
     public boolean isTimeLimitPassed() {
         return System.currentTimeMillis() >= timeLimitInMillis;
     }
@@ -1089,7 +1108,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
         timeboxRunnable = () -> {
             boolean twoMinuteTimeboxWentUnacknowledged = currentTimeboxDuration == 2 && !wasTimerNotificationAcknowledged();
-            if (!twoMinuteTimeboxWentUnacknowledged) {
+            if (!twoMinuteTimeboxWentUnacknowledged && !isDriveModeOn()) {
                 timeboxComplete();
             } else {
                 Log.d("Timebox", "Two minute timebox went unacknowledged, not completing timebox");
@@ -1100,11 +1119,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 Log.d("Timebox", "Time limit reached, stopping timebox");
                 stopTimebox();
                 return;
-            } else if (!wasTimerNotificationAcknowledged()) {
+            } else if (!isDriveModeOn() && !wasTimerNotificationAcknowledged()) {
                 Log.d("Timebox", "Timer notification not acknowledged, stopping timebox");
                 stopTimebox();
                 return;
-            } else if (!StartlinesManager.isCalendarLikelyVisible(this)) {
+            } else if (!isDriveModeOn() && !StartlinesManager.isCalendarLikelyVisible(this)) {
                 Log.d("Timebox", "Calendar not likely visible, stopping timebox");
                 stopTimebox();
                 return;
@@ -1133,6 +1152,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             clearTemporaryBlockList();
             timesStopButtonPressed = 0;
             recordTime("timeboxEnded");
+            setDriveModeToFalse();
             if (StartlinesManager.isMusicModeOn(this)) {
                 startTimerAndOpenBreakApp();
             } else {
