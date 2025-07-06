@@ -21,33 +21,37 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/manage_blocked_apps"
-        android:title="@string/manage_blocked_apps_button_text"
+        android:id="@+id/menu_app_management_group"
+        android:title="Manage apps"
         android:orderInCategory="100"
-        app:showAsAction="never" />
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/manage_blocked_apps"
+                android:title="@string/manage_blocked_apps_button_text"
+                android:orderInCategory="100" />
 
-    <item
-        android:id="@+id/manage_distracting_apps"
-        android:title="@string/distracting_apps_button_text"
-        android:orderInCategory="100"
-        app:showAsAction="never" />
+            <item
+                android:id="@+id/manage_distracting_apps"
+                android:title="@string/distracting_apps_button_text"
+                android:orderInCategory="110" />
 
-    <item
-        android:id="@+id/manage_music_apps"
-        android:title="@string/music_apps_button_text"
-        android:orderInCategory="100"
-        app:showAsAction="never" />
+            <item
+                android:id="@+id/manage_music_apps"
+                android:title="@string/music_apps_button_text"
+                android:orderInCategory="120" />
+
+            <item
+                android:id="@+id/select_calendar_app"
+                android:title="@string/menu_select_calendar_app"
+                android:orderInCategory="130" />
+        </menu>
+    </item>
 
     <item
         android:id="@+id/manage_unblocked_apps"
         android:title="@string/manage_unblocked_apps_button_text"
         android:orderInCategory="120"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/select_calendar_app"
-        android:title="@string/menu_select_calendar_app"
-        android:orderInCategory="110"
         app:showAsAction="never" />
 
     <item
