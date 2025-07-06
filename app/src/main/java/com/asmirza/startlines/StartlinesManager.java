@@ -370,7 +370,7 @@ public class StartlinesManager {
                 startMusicPauseLoop(context);
                 NotificationHelper.showXModeNotification(context, getStartlineStatus(context).equals("X"));
                 Log.d("StartlinesManager", "Auto starting timebox as part of X mode");
-                autoStartIfNotHappened(context);
+                autoStartIfNotHappenedAndEnabled(context);
             }
             scheduleStartlineChecker(context,5, lineType);
         } else if (status.equals("1")) {
@@ -502,7 +502,7 @@ public class StartlinesManager {
         } else if (!working && isAppBlocked(context, packageName)) {
             Log.d("AppBlockingAccessiblityService", "Blocked app detected: " + packageName);
             if (isAppBlockingModeOn(context)) {
-                autoStartIfNotHappened(context);
+                autoStartIfNotHappenedAndEnabled(context);
                 blockApp(context, packageName);
             } else if (getRecordedTime(context, "timeboxEnded") > getRecordedTime(context, "manageTimeboxButtonPressed")) {
                 Toast.makeText(context, "Record whether the previous timebox was schedule compliant.", Toast.LENGTH_SHORT).show();
@@ -764,12 +764,12 @@ public class StartlinesManager {
         context.startActivity(startTimeboxIntent);
     }
 
-    public static void autoStartIfNotHappened(Context context) {
-        if (!autoStartHappened(context) && !wasAutoStartRecentlyAttempted(context)) {
+    public static void autoStartIfNotHappenedAndEnabled(Context context) {
+        if (isAutoStartEnabled(context) && !autoStartHappened(context) && !wasAutoStartRecentlyAttempted(context)) {
             Log.d("StartlinesManager", "Auto start not happened, starting timebox");
             autoStart(context);
         } else {
-            Log.d("StartlinesManager", "Auto start already happened, not starting timebox");
+            Log.d("StartlinesManager", "Auto start already happened or disabled, not starting timebox");
         }
     }
 
@@ -796,6 +796,28 @@ public class StartlinesManager {
         SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         return sharedPreferences.getLong(sharedPreferenceName, 0);
     }
+
+    public static void toggleAutoStart(Context context) {
+        boolean isAutoStartEnabled = isAutoStartEnabled(context);
+        setAutoStartEnabled(context, !isAutoStartEnabled);
+        Toast.makeText(context, "Autostart " + (isAutoStartEnabled(context) ? "enabled" : "disabled"), Toast.LENGTH_SHORT).show();
+    }
+
+    public static boolean isAutoStartEnabled(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getBoolean("autoStartEnabled", false);
+    }
+
+    public static boolean setAutoStartEnabled(Context context, boolean enable) {
+        SharedPreferences prefs = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("autoStartEnabled", enable);
+        editor.apply();
+        Log.d("StartlinesManager", "Auto start enabled: " + enable);
+        return enable;
+    }
+
+    /*********************** Code related to schedule acknowledgement ************************/
 
 
 

@@ -71,4 +71,10 @@
         android:title="Drive Mode"
         app:showAsAction="never"
         android:orderInCategory="130" />
+
+    <item
+        android:id="@+id/toggle_auto_start"
+        android:title="Toggle Autostart"
+        app:showAsAction="never"
+        android:orderInCategory="140" />
 </menu>

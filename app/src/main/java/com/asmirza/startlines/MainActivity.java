@@ -269,6 +269,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             setDriveModeToTrue();
             Log.d("MainActivity", "Drive mode set to on");
             return true;
+        } else if (item.getItemId() == R.id.toggle_auto_start) {
+            StartlinesManager.toggleAutoStart(this);
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
