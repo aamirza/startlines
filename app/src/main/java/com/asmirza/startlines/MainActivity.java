@@ -73,6 +73,7 @@ import java.util.Set;
 public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskAdapterCallback {
     private boolean workingStatus = false;  // 0 if timebox is not running, 1 if timebox is running
     private boolean driveMode = false;  // true if you want to stop calendar acknowledgements/testing
+    private boolean preparationMode = false; // Whether you are preparing for a timebox or not.
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private Runnable startlineSnoozer; // will be used to snooze startlines
@@ -373,7 +374,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
         startButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Start button pressed");
-            startTimebox();
+            startPreparation();
         });
     }
 
@@ -948,6 +949,16 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         saveWorkingStatus();
     }
 
+    private void setPreparationModeToTrue() {
+        preparationMode = true;
+        Log.d("MainActivity", "Preparation mode set to true");
+    }
+
+    private void setPreparationModeToFalse() {
+        preparationMode = false;
+        Log.d("MainActivity", "Preparation mode set to false");
+    }
+
     private void setDriveModeToTrue() {
         driveMode = true;
         Log.d("MainActivity", "Drive mode set to true");
@@ -1053,11 +1064,26 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         Log.d("Scheduler", "Next alarm set for " + lineType + " at " + calendar.getTime().toString());
     }
 
+    private void toastIfWorkingAndTryingToStartTimebox() {
+        Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
+        Log.w("Timebox", "Timebox already running, not starting a new one");
+    }
+
+    public void startPreparation() {
+        Log.d("MainActivity", "Starting preparation mode");
+        if (isWorking()) {
+            toastIfWorkingAndTryingToStartTimebox();
+            return;
+        }
+
+        setPreparationModeToTrue();
+        startTimebox(2);
+    }
+
     public void startTimebox() {
 
         if (isWorking()) {
-            Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
-            Log.w("Timebox", "Timebox already running, not starting a new one");
+            toastIfWorkingAndTryingToStartTimebox();
             return;
         }
 
@@ -1068,7 +1094,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 StartlinesManager.saveBreakApp(getApplicationContext(), packageName);
             }
         });
-        StartlinesManager.setBreakSuggestionsSilenced(this, false);
+        StartlinesManager.setBreakSuggestionsSilenced(this, true);
         startTimebox(2);
     }
 
@@ -1098,7 +1124,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
         if (!isTimeLimitSet() && !StartlinesManager.isNotConnectedToIndoorWifi(this)) {
             // If there is no time limit set, play the ticking sound
-            playTickingSound();
+            if (!preparationMode) {
+                playTickingSound();
+            }
         }
 
         setTimeboxStatusText(currentTimeboxDuration + " (" + endTimeFormatted + ")");
@@ -1116,7 +1144,15 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         // Set Startlines to "1" after timebox completion and start the new timebox
 
         timeboxRunnable = () -> {
+            if (preparationMode) {
+                Log.d("Timebox", "Preparation mode ended");
+                setPreparationModeToFalse();
+                startTimebox(2);
+                return;
+            }
+
             boolean twoMinuteTimeboxWentUnacknowledged = currentTimeboxDuration == 2 && !wasTimerNotificationAcknowledged();
+
             if (!twoMinuteTimeboxWentUnacknowledged && !isDriveModeOn()) {
                 timeboxComplete();
             } else {
