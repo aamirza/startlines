@@ -37,6 +37,8 @@ public class TimeboxAdapter extends RecyclerView.Adapter<TimeboxAdapter.TimeboxV
 
         holder.startTime.setText(timeFormat.format(timebox.getStartTime()));
         holder.endTime.setText(timebox.getEndTime() > timebox.getStartTime() ? timeFormat.format(timebox.getEndTime()) : "Ongoing");
+
+        holder.scheduleCompliant.setOnCheckedChangeListener(null);
         holder.scheduleCompliant.setChecked(timebox.isScheduleCompliant());
 
         holder.scheduleCompliant.setOnCheckedChangeListener((buttonView, isChecked) -> {
