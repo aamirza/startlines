@@ -45,6 +45,11 @@
                 android:id="@+id/select_calendar_app"
                 android:title="@string/menu_select_calendar_app"
                 android:orderInCategory="130" />
+
+            <item
+                android:id="@+id/select_essay_app"
+                android:title="Select Essay App"
+                android:orderInCategory="140" />
         </menu>
     </item>
 

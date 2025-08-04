@@ -14,13 +14,33 @@ import android.widget.Button;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class AppBlockingActivity extends AppCompatActivity {
     private AppRecyclerViewAdapter adapter;
     private String blockType;
+
+    public static final String DISTRACTING_APPS_BLOCK = "DISTRACTING_APPS_BLOCK";
+    public static final String X_MODE_BLOCK = "X_MODE_BLOCK";
+    public static final String MUSIC_APPS = "MUSIC_APPS";
+    public static final String CALENDAR_APP = "CALENDAR_APP";
+    public static final String TEMPORARY_UNBLOCK = "TEMPORARY_UNBLOCK";
+    public static final String ESSAY_APP = "ESSAY_APP";
+
+    public static Map<String, String> BLOCK_TYPE = new HashMap<>();
+    static {
+        BLOCK_TYPE.put(X_MODE_BLOCK, "blockedApps");
+        BLOCK_TYPE.put(DISTRACTING_APPS_BLOCK, "distractingApps");
+        BLOCK_TYPE.put(MUSIC_APPS, "musicApps");
+        BLOCK_TYPE.put(CALENDAR_APP, "calendarApp");
+        BLOCK_TYPE.put(TEMPORARY_UNBLOCK, "temporarilyUnblockedApps");
+        BLOCK_TYPE.put(ESSAY_APP, "essayApp");
+        BLOCK_TYPE = Collections.unmodifiableMap(BLOCK_TYPE);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,35 +112,18 @@ public class AppBlockingActivity extends AppCompatActivity {
             selectedAppPackageNames.add(appInfo.getPackageName());
         }
 
-        if (blockType.equals("X_MODE_BLOCK")) {
-            editor.putStringSet("blockedApps", selectedAppPackageNames);
-        } else if (blockType.equals("DISTRACTING_APPS_BLOCK")) {
-            editor.putStringSet("distractingApps", selectedAppPackageNames);
-        } else if (blockType.equals("MUSIC_APPS")) {
-            editor.putStringSet("musicApps", selectedAppPackageNames);
-        } else if (blockType.equals("CALENDAR_APP")) {
-            editor.putStringSet("calendarApp", selectedAppPackageNames);
-        } else if (blockType.equals("TEMPORARY_UNBLOCK")) {
-            editor.putStringSet("temporarilyUnblockedApps", selectedAppPackageNames);
-        }
+        editor.putStringSet(BLOCK_TYPE.get(blockType), selectedAppPackageNames);
 
         editor.apply();
     }
 
     public Set<String> loadBlockedApps() {
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        if (blockType.equals("X_MODE_BLOCK")) {
+        String key = BLOCK_TYPE.get(blockType);
+        if (key != null) {
+            return prefs.getStringSet(BLOCK_TYPE.get(blockType), new HashSet<>());
+        } else {
             return prefs.getStringSet("blockedApps", new HashSet<>());
-        } else if (blockType.equals("DISTRACTING_APPS_BLOCK")) {
-            return prefs.getStringSet("distractingApps", new HashSet<>());
-        } else if (blockType.equals("MUSIC_APPS")) {
-            return prefs.getStringSet("musicApps", new HashSet<>());
-        } else if (blockType.equals("CALENDAR_APP")) {
-            return prefs.getStringSet("calendarApp", new HashSet<>());
-        } else if (blockType.equals("TEMPORARY_UNBLOCK")) {
-            return prefs.getStringSet("temporarilyUnblockedApps", new HashSet<>());
         }
-
-        return prefs.getStringSet("blockedApps", new HashSet<>());
     }
 }

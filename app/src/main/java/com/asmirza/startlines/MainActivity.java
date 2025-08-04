@@ -240,6 +240,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             intent.putExtra("blockType", "CALENDAR_APP");
             startActivity(intent);
             return true;
+        } else if (item.getItemId() == R.id.select_essay_app) {
+          Log.d("MainActivity", "Select essay app menu button pressed");
+          Intent intent = new Intent(this, AppBlockingActivity.class);
+          intent.putExtra("blockType", AppBlockingActivity.ESSAY_APP);
+          startActivity(intent);
+          return true;
         } else if (item.getItemId() == R.id.ip_port_settings) {
             openIPSettingsDialog();
             return true;
@@ -1159,7 +1165,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             if (StartlinesManager.isMusicModeOn(this)) {
                 startTimerAndOpenBreakApp();
             } else {
-                openCalendarIfCheckInModeOn();
+                StartlinesManager.openEssayAppWithMessage(this,"Write for 2 minutes on the benefits of music mode");
             }
             switchCalendarModeToOn();
             Log.d("Timebox", "Timebox stopped");
@@ -1195,6 +1201,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             long twoMinutes = 2 * 60 * 1000;
             String snoozeEndTime = timestampToText(System.currentTimeMillis() + twoMinutes);
             setTimeboxStatusText("Snoozing... End time: " + snoozeEndTime);
+            StartlinesManager.openEssayAppWithMessage(this, "Write down the benefits of starting for 2 minutes");
             handler.postDelayed(startlineSnoozer, twoMinutes);
         } else {
             Log.w("Timebox", "No startline or funline to snooze");

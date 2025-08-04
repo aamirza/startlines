@@ -474,22 +474,35 @@ public class StartlinesManager {
         context.startActivity(intent);
     }
 
-    public static void openCalendarApp(Context context) {
-        Set<String> calendarApp = getCalendarApp(context);
-        if (calendarApp.isEmpty()) {
-            Log.d("StartlinesManager", "No calendar app selected");
+    public static void openRandomApp(Context context, Set<String> apps) {
+        if (apps.isEmpty()) {
+            Log.d("StartlinesManager", "No app selected");
             return;
         }
 
-        List<String> calendarAppList = new ArrayList<>(calendarApp);
-        int randomIndex = (int) (Math.random() * calendarAppList.size());
-        String randomCalendarApp = calendarAppList.get(randomIndex);
+        List<String> appList = new ArrayList<>(apps);
+        int randomIndex = (int) (Math.random() * appList.size());
+        String randomApp = appList.get(randomIndex);
 
-        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(randomCalendarApp);
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(randomApp);
         if (launchIntent != null) {
-            Log.d("StartlinesManager", "Opening calendar app: " + randomCalendarApp);
+            Log.d("StartlinesManager", "Opening app: " + randomApp);
             context.startActivity(launchIntent);
         }
+    }
+
+    public static void openCalendarApp(Context context) {
+        openRandomApp(context, getCalendarApp(context));
+    }
+
+    public static void openEssayApp(Context context) {
+        openRandomApp(context, getEssayApp(context));
+    }
+
+    public static void openEssayAppWithMessage(Context context, String message) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        startSystemTimer(context);
+        openEssayApp(context);
     }
 
     public static void blockAppIfNecessary(Context context, String packageName) {
@@ -564,10 +577,18 @@ public class StartlinesManager {
 
 
     public static Set<String> getCalendarApp(Context context) {
-        Log.d("StartlinesManager", "Getting calendar apps");
+        return getBlockingApps(context, AppBlockingActivity.CALENDAR_APP);
+    }
+
+    public static Set<String> getEssayApp(Context context) {
+        return getBlockingApps(context, AppBlockingActivity.ESSAY_APP);
+    }
+
+    public static Set<String> getBlockingApps(Context context, String blockType) {
+        Log.d("StartlinesManager", "Getting " + blockType + " apps");
         SharedPreferences sharedPreferences = context.getSharedPreferences("sharedPrefs", MODE_PRIVATE);
-        Set<String> calendarApp = sharedPreferences.getStringSet("calendarApp", new HashSet<>());
-        return calendarApp;
+        Set<String> apps = sharedPreferences.getStringSet(AppBlockingActivity.BLOCK_TYPE.get(blockType), new HashSet<>());
+        return apps;
     }
 
     public static void openRandomMusicApp(Context context) {
