@@ -282,6 +282,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.manage_start_tasks) {
             taskEditDialog("starting", null);
             return true;
+        } else if (item.getItemId() == R.id.manage_break_tasks) {
+            taskEditDialog("break", null);
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -388,13 +391,20 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         stopButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Stop button pressed");
             if (timesStopButtonPressed == 0) {
+                //showStopButtonAdviceDialogue();
+                stopTimebox();
+                startBreakTimebox();
                 timesStopButtonPressed++;
-                showStopButtonAdviceDialogue();
             } else {
                 timesStopButtonPressed = 0;
                 stopTimebox();
             }
         });
+    }
+
+    private void startBreakTimebox() {
+        addTasksFromList("break");
+        startTimebox(5);
     }
 
     private void setupSetTimeLimitButton() {
@@ -1151,6 +1161,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             if (preparationMode) {
                 Log.d("Timebox", "Preparation mode ended");
                 setPreparationModeToFalse();
+                startTimebox(2);
+                return;
+            } else if (currentTimeboxDuration % 2 != 0) { // This is a break timebox
+                Log.d("Timebox", "Break ended");
+                timeboxComplete();
+                timesStopButtonPressed = 0;
                 startTimebox(2);
                 return;
             }
