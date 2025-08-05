@@ -279,6 +279,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.toggle_auto_start) {
             StartlinesManager.toggleAutoStart(this);
             return true;
+        } else if (item.getItemId() == R.id.manage_start_tasks) {
+            taskEditDialog("starting", null);
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -1077,6 +1080,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         }
 
         setPreparationModeToTrue();
+        addTasksFromList("starting");
         startTimebox(2);
     }
 
@@ -1590,6 +1594,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         builder.show();
     }
 
+    private void addTasksFromList(String taskType) {
+        String[] taskArray = getTaskListFromPrefs(taskType).split("\\n");
+        addTasks(Arrays.asList(taskArray));
+
+    }
+
     private void showStopButtonAdviceDialogue() {
         // Create an AlertDialog for what you should do before the timebox ends
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1623,6 +1633,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         return prefs.getString("stopButtonAdvice", defaultAdvice);
     }
 
+    private String getTaskListFromPrefs(String taskType) {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getString(taskType + "Tasks", "");
+    }
+
     private void showEditAdviceDialog(Runnable onSaveCallback) {
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         String currentAdvice = prefs.getString("stopButtonAdvice", "");
@@ -1646,6 +1661,37 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 .setPositiveButton("Save", (dialog, which) -> {
                     String updatedAdvice = input.getText().toString();
                     prefs.edit().putString("stopButtonAdvice", updatedAdvice).apply();
+                    if (onSaveCallback != null) {
+                        onSaveCallback.run();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void taskEditDialog(String taskType, Runnable onSaveCallback) {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        String prefName = taskType + "Tasks";
+        String currentTaskList = prefs.getString(prefName, "");
+
+        final EditText input = new EditText(this);
+        input.setText(currentTaskList);
+        input.setHint("Enter each task on a new line");
+
+        input.setMinLines(6);
+        input.setMaxLines(15);
+        input.setSingleLine(false);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE |
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT);
+        input.setImeOptions(EditorInfo.IME_FLAG_NO_ENTER_ACTION);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit " + taskType + " tasks.")
+                .setView(input)
+                .setMessage("Each task will be added separately.\nSeparate each task by a new line.")
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String updatedAdvice = input.getText().toString();
+                    prefs.edit().putString(prefName, updatedAdvice).apply();
                     if (onSaveCallback != null) {
                         onSaveCallback.run();
                     }

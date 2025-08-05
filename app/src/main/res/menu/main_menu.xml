@@ -60,6 +60,24 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/manage_bookend_tasks"
+        android:title="Edit bookend tasks"
+        android:orderInCategory="60"
+        app:showAsAction="never" >
+        <menu>
+            <item
+                android:id="@+id/manage_start_tasks"
+                android:title="Manage start tasks"
+                android:orderInCategory="10" />
+
+            <item
+                android:id="@+id/manage_break_tasks"
+                android:title="Manage break tasks"
+                android:orderInCategory="20" />
+        </menu>
+    </item>
+
+    <item
         android:id="@+id/ip_port_settings"
         android:title="@string/ip_and_port_settings_menu_button"
         app:showAsAction="never"
