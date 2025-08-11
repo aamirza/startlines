@@ -389,22 +389,28 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         Log.d("MainActivity", "Setting up stop button");
 
         stopButton.setOnClickListener(v -> {
-            Log.d("MainActivity", "Stop button pressed");
-            if (timesStopButtonPressed == 0) {
-                //showStopButtonAdviceDialogue();
-                stopTimebox();
-                startBreakTimebox();
-                timesStopButtonPressed++;
-            } else {
-                timesStopButtonPressed = 0;
-                stopTimebox();
-            }
+            stopButtonLogic();
         });
+    }
+
+    private void stopButtonLogic() {
+        Log.d("MainActivity", "Stop button pressed");
+        if (timesStopButtonPressed == 0) {
+            //showStopButtonAdviceDialogue();
+            stopTimebox();
+            startBreakTimebox();
+            timesStopButtonPressed++;
+        } else {
+            timesStopButtonPressed = 0;
+            stopTimebox();
+        }
     }
 
     private void startBreakTimebox() {
         addTasksFromList("break");
+        setDriveModeToFalse();
         startTimebox(5);
+        setTimeLimit(4);
     }
 
     private void setupSetTimeLimitButton() {
@@ -472,7 +478,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     Log.d("MainActivity", "Start Startline Timer notification button pressed");
                     if (!isWorking()) {
                         switchFunModeToOn(false);
-                        startTimebox();
+                        startPreparation();
                     } else {
                         Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
                         Log.w("MainActivity", "Timebox already running, not starting a new one");
@@ -482,7 +488,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     Log.d("MainActivity", "Start Funline Timer notification button pressed");
                     if (!isWorking()) {
                         switchFunModeToOn(true);
-                        startTimebox();
+                        startPreparation();
                     } else {
                         Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
                         Log.w("MainActivity", "Timebox already running, not starting a new one");
@@ -493,10 +499,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     if (!isWorking()) {
                         if (getStartlineStatus().equals("X")) {
                             switchFunModeToOn(false);
-                            startTimebox();
+                            startPreparation();
                         } else if (getFunlineStatus().equals("X")) {
                             switchFunModeToOn(true);
-                            startTimebox();
+                            startPreparation();
                         } else {
                             Toast.makeText(this, "Neither Startline or Funline are X'd. Timer not started.", Toast.LENGTH_SHORT).show();
                             Log.w("MainActivity", "Neither Startline or Funline are X'd. Timer not started.");
@@ -508,7 +514,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     break;
                 case "ACTION_STOP_TIMER":
                     Log.d("MainActivity", "Stop Timer notification button pressed");
-                    stopTimebox();
+                    stopButtonLogic();
                     break;
                 case "ACTION_SNOOZE":
                     Log.d("MainActivity", "Snooze button pressed");
@@ -1158,16 +1164,23 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         // Set Startlines to "1" after timebox completion and start the new timebox
 
         timeboxRunnable = () -> {
+            boolean breakTimebox = (currentTimeboxDuration % 2) != 0;
             if (preparationMode) {
                 Log.d("Timebox", "Preparation mode ended");
                 setPreparationModeToFalse();
                 startTimebox(2);
+                setTimeLimit(29);
                 return;
-            } else if (currentTimeboxDuration % 2 != 0) { // This is a break timebox
+            } else if (breakTimebox) {
                 Log.d("Timebox", "Break ended");
                 timeboxComplete();
                 timesStopButtonPressed = 0;
-                startTimebox(2);
+                if (isTimeLimitPassed()) {
+                    startTimebox(2);
+                    setTimeLimit(29);
+                } else {
+                    startTimebox(currentTimeboxDuration + 5);
+                }
                 return;
             }
 
@@ -1182,7 +1195,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
             if (isTimeLimitPassed()) {
                 Log.d("Timebox", "Time limit reached, stopping timebox");
-                stopTimebox();
+                startBreakTimebox();
                 return;
             } else if (!isDriveModeOn() && !wasTimerNotificationAcknowledged()) {
                 Log.d("Timebox", "Timer notification not acknowledged, stopping timebox");
