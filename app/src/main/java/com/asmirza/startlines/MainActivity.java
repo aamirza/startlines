@@ -1168,6 +1168,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             if (preparationMode) {
                 Log.d("Timebox", "Preparation mode ended");
                 setPreparationModeToFalse();
+                timeboxComplete();
                 startTimebox(2);
                 setTimeLimit(29);
                 return;
