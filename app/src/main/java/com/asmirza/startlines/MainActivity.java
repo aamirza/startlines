@@ -286,6 +286,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.manage_break_tasks) {
             taskEditDialog("break", null);
             return true;
+        } else if (item.getItemId() == R.id.toggle_break_mode) {
+            ToggleOption.BREAK.toggleMode(this);
+            return true;
+        } else if (item.getItemId() == R.id.toggle_preparation_mode) {
+            ToggleOption.PREPARATION.toggleMode(this);
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -396,7 +402,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
     private void stopButtonLogic() {
         Log.d("MainActivity", "Stop button pressed");
-        if (timesStopButtonPressed == 0) {
+        if (ToggleOption.BREAK.isModeEnabled(this) && timesStopButtonPressed == 0) {
             //showStopButtonAdviceDialogue();
             stopTimebox();
             startBreakTimebox();
@@ -1095,9 +1101,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             toastIfWorkingAndTryingToStartTimebox();
             return;
         }
-
-        setPreparationModeToTrue();
-        addTasksFromList("starting");
+        if (ToggleOption.PREPARATION.isModeEnabled(this)) {
+            setPreparationModeToTrue();
+            addTasksFromList("starting");
+        }
         startTimebox(2);
     }
 
@@ -1197,7 +1204,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
             if (isTimeLimitPassed()) {
                 Log.d("Timebox", "Time limit reached, stopping timebox");
-                startBreakTimebox();
+                if (ToggleOption.BREAK.isModeEnabled(this)) {
+                    startBreakTimebox();
+                } else {
+                    stopTimebox();
+                }
                 return;
             } else if (!isDriveModeOn() && !wasTimerNotificationAcknowledged()) {
                 Log.d("Timebox", "Timer notification not acknowledged, stopping timebox");
@@ -1234,11 +1245,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             timesStopButtonPressed = 0;
             recordTime("timeboxEnded");
             setDriveModeToFalse();
-            if (StartlinesManager.isMusicModeOn(this)) {
-                startTimerAndOpenBreakApp();
-            } else {
-                StartlinesManager.openEssayAppWithMessage(this,"Write for 2 minutes on the benefits of music mode");
-            }
             switchCalendarModeToOn();
             Log.d("Timebox", "Timebox stopped");
         } else {
