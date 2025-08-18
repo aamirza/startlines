@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     private boolean workingStatus = false;  // 0 if timebox is not running, 1 if timebox is running
     private boolean driveMode = false;  // true if you want to stop calendar acknowledgements/testing
     private boolean preparationMode = false; // Whether you are preparing for a timebox or not.
+    private boolean timeLimitSetManually = false; // Whether a time limit was set manually or not.
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private Runnable startlineSnoozer; // will be used to snooze startlines
@@ -1142,7 +1143,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 getPotentialComplianceScore(currentTimeboxDuration),
                 !isFunModeOn());
 
-        if (!isTimeLimitSet() && !StartlinesManager.isNotConnectedToIndoorWifi(this)) {
+        if (!timeLimitSetManually && !StartlinesManager.isNotConnectedToIndoorWifi(this)) {
             // If there is no time limit set, play the ticking sound
             if (!preparationMode) {
                 playTickingSound();
@@ -1229,6 +1230,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             deleteOldTimeboxes();
             NotificationHelper.cancelTimerNotification(this);
             clearTemporaryBlockList();
+            resetTimeLimitSetManually();
             timesStopButtonPressed = 0;
             recordTime("timeboxEnded");
             setDriveModeToFalse();
@@ -1323,6 +1325,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             if (!inputText.isEmpty()) {
                 int minutes = Integer.parseInt(inputText);
                 setTimeLimit(minutes);
+                stopTickingSound();
+                setTimeLimitSetManually();
                 Log.d("Timebox", "Time limit set for " + minutes + " minutes");
             } else {
                 resetWorkingUntilTime();
@@ -1341,7 +1345,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         timeLimitInMillis = timestampMinutesFromNow(minutes);
         String endTimeText = timestampToText(timeLimitInMillis);
         setWorkingUntilText(endTimeText);
-        stopTickingSound();
     }
 
     private void setStartlineStatus(String i) {
@@ -1418,7 +1421,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     }
 
     private void unmutePhoneIfTimeboxRunningAndNoTimeLimitIsSet() {
-        if (isWorking() && !isTimeLimitSet()) {
+        if (isWorking() && !timeLimitSetManually) {
             AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
             int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
             if (currentVolume == 0) {
@@ -1804,5 +1807,13 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
+    }
+
+    void setTimeLimitSetManually() {
+        timeLimitSetManually = true;
+    }
+
+    void resetTimeLimitSetManually() {
+        timeLimitSetManually = false;
     }
 }
