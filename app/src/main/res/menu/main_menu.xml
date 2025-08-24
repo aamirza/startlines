@@ -117,6 +117,12 @@
                 android:title="Toggle Break Mode"
                 app:showAsAction="never"
                 android:orderInCategory="30" />
+
+            <item
+                android:id="@+id/toggle_task_mode"
+                android:title="Toggle Task Mode"
+                app:showAsAction="never"
+                android:orderInCategory="40" />
         </menu>
     </item>
 </menu>

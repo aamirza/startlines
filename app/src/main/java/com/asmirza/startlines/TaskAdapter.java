@@ -35,6 +35,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.taskCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 taskList.remove(task);
+                TaskMode.markTaskComplete();
                 notifyItemRemoved(position);
                 notifyItemChanged(position, taskList.size());
 

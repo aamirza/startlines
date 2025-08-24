@@ -523,6 +523,12 @@ public class StartlinesManager {
                         " Previous timebox started: " + getRecordedTime(context, "timeboxStarted") +
                         " Previous timebox ended: " + getRecordedTime(context, "timeboxEnded"));
                 openCalendarApp(context);
+            } else if (!TaskMode.wasTaskAdded()) {
+                Toast.makeText(context, "(Task Mode) Add the next task you are going to do.", Toast.LENGTH_SHORT).show();
+                Log.d("MainActivity", "Starting timebox prevented. Previous timebox not updated." +
+                        " Previous timebox started: " + getRecordedTime(context, "timeboxStarted") +
+                        " Previous timebox ended: " + getRecordedTime(context, "timeboxEnded"));
+                openCalendarApp(context);
             }
 
             } else if (isMusicModeOnAndAppNotPlayingMedia(context) && !StartlinesManager.isBreakSuggestionsSilenced(context)) {

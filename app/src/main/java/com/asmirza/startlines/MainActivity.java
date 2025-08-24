@@ -169,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             taskList.add(new Task(taskName));
             taskAdapter.notifyItemInserted(taskList.size() - 1);
             taskInput.setText("");
+            TaskMode.markTaskAdded();
             saveTasks();
         } else {
             taskInputLayout.setError("Task name cannot be empty");
@@ -291,6 +292,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             return true;
         } else if (item.getItemId() == R.id.toggle_preparation_mode) {
             ToggleOption.PREPARATION.toggleMode(this);
+            return true;
+        } else if (item.getItemId() == R.id.toggle_task_mode) {
+            ToggleOption.TASK.toggleMode(this);
             return true;
         }
 
@@ -1105,24 +1109,17 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             setPreparationModeToTrue();
             addTasksFromList("starting");
         }
-        startTimebox(2);
+        startTimebox();
     }
 
     public void startTimebox() {
-
         if (isWorking()) {
             toastIfWorkingAndTryingToStartTimebox();
             return;
         }
 
-
-        showMusicModeAppChooserDialog(this, new onMusicAppSelectedListener() {
-            @Override
-            public void onAppSelected(String packageName) {
-                StartlinesManager.saveBreakApp(getApplicationContext(), packageName);
-            }
-        });
         StartlinesManager.setBreakSuggestionsSilenced(this, true);
+        TaskMode.resetTaskComplete();
         startTimebox(2);
     }
 
@@ -1219,6 +1216,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 stopTimebox();
                 return;
             }
+            else if (!isDriveModeOn() && !TaskMode.wasTaskCompleted()) {
+                Log.d("Timebox", "Task not completed during timebox. Stopping timebox.");
+                stopTimebox();
+                return;
+            }
             int nextTimeboxDuration = currentTimeboxDuration + 2;
             startTimebox(nextTimeboxDuration);
         };
@@ -1246,6 +1248,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             recordTime("timeboxEnded");
             setDriveModeToFalse();
             switchCalendarModeToOn();
+            TaskMode.resetTaskAdded();
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
