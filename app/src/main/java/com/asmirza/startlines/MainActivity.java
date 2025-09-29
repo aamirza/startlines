@@ -73,6 +73,8 @@ import java.util.Set;
 public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskAdapterCallback {
     private boolean workingStatus = false;  // 0 if timebox is not running, 1 if timebox is running
     private boolean driveMode = false;  // true if you want to stop calendar acknowledgements/testing
+    private boolean preparationMode = false; // Whether you are preparing for a timebox or not.
+    private boolean timeLimitSetManually = false; // Whether a time limit was set manually or not.
     private Handler handler = new Handler();   // will be used to create and cancel timeboxes
     private Runnable timeboxRunnable;  // will be used to create and cancel timeboxes
     private Runnable startlineSnoozer; // will be used to snooze startlines
@@ -167,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             taskList.add(new Task(taskName));
             taskAdapter.notifyItemInserted(taskList.size() - 1);
             taskInput.setText("");
+            TaskMode.markTaskAdded();
             saveTasks();
         } else {
             taskInputLayout.setError("Task name cannot be empty");
@@ -278,6 +281,21 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         } else if (item.getItemId() == R.id.toggle_auto_start) {
             StartlinesManager.toggleAutoStart(this);
             return true;
+        } else if (item.getItemId() == R.id.manage_start_tasks) {
+            taskEditDialog("starting", null);
+            return true;
+        } else if (item.getItemId() == R.id.manage_break_tasks) {
+            taskEditDialog("break", null);
+            return true;
+        } else if (item.getItemId() == R.id.toggle_break_mode) {
+            ToggleOption.BREAK.toggleMode(this);
+            return true;
+        } else if (item.getItemId() == R.id.toggle_preparation_mode) {
+            ToggleOption.PREPARATION.toggleMode(this);
+            return true;
+        } else if (item.getItemId() == R.id.toggle_task_mode) {
+            ToggleOption.TASK.toggleMode(this);
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -373,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
         startButton.setOnClickListener(v -> {
             Log.d("MainActivity", "Start button pressed");
-            startTimebox();
+            startPreparation();
         });
     }
 
@@ -382,15 +400,28 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         Log.d("MainActivity", "Setting up stop button");
 
         stopButton.setOnClickListener(v -> {
-            Log.d("MainActivity", "Stop button pressed");
-            if (timesStopButtonPressed == 0) {
-                timesStopButtonPressed++;
-                showStopButtonAdviceDialogue();
-            } else {
-                timesStopButtonPressed = 0;
-                stopTimebox();
-            }
+            stopButtonLogic();
         });
+    }
+
+    private void stopButtonLogic() {
+        Log.d("MainActivity", "Stop button pressed");
+        if (ToggleOption.BREAK.isModeEnabled(this) && timesStopButtonPressed == 0) {
+            //showStopButtonAdviceDialogue();
+            stopTimebox();
+            startBreakTimebox();
+            timesStopButtonPressed++;
+        } else {
+            timesStopButtonPressed = 0;
+            stopTimebox();
+        }
+    }
+
+    private void startBreakTimebox() {
+        addTasksFromList("break");
+        setDriveModeToFalse();
+        startTimebox(5);
+        setTimeLimit(4);
     }
 
     private void setupSetTimeLimitButton() {
@@ -458,7 +489,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     Log.d("MainActivity", "Start Startline Timer notification button pressed");
                     if (!isWorking()) {
                         switchFunModeToOn(false);
-                        startTimebox();
+                        startPreparation();
                     } else {
                         Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
                         Log.w("MainActivity", "Timebox already running, not starting a new one");
@@ -468,7 +499,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     Log.d("MainActivity", "Start Funline Timer notification button pressed");
                     if (!isWorking()) {
                         switchFunModeToOn(true);
-                        startTimebox();
+                        startPreparation();
                     } else {
                         Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
                         Log.w("MainActivity", "Timebox already running, not starting a new one");
@@ -479,10 +510,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     if (!isWorking()) {
                         if (getStartlineStatus().equals("X")) {
                             switchFunModeToOn(false);
-                            startTimebox();
+                            startPreparation();
                         } else if (getFunlineStatus().equals("X")) {
                             switchFunModeToOn(true);
-                            startTimebox();
+                            startPreparation();
                         } else {
                             Toast.makeText(this, "Neither Startline or Funline are X'd. Timer not started.", Toast.LENGTH_SHORT).show();
                             Log.w("MainActivity", "Neither Startline or Funline are X'd. Timer not started.");
@@ -494,7 +525,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                     break;
                 case "ACTION_STOP_TIMER":
                     Log.d("MainActivity", "Stop Timer notification button pressed");
-                    stopTimebox();
+                    stopButtonLogic();
                     break;
                 case "ACTION_SNOOZE":
                     Log.d("MainActivity", "Snooze button pressed");
@@ -948,6 +979,16 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         saveWorkingStatus();
     }
 
+    private void setPreparationModeToTrue() {
+        preparationMode = true;
+        Log.d("MainActivity", "Preparation mode set to true");
+    }
+
+    private void setPreparationModeToFalse() {
+        preparationMode = false;
+        Log.d("MainActivity", "Preparation mode set to false");
+    }
+
     private void setDriveModeToTrue() {
         driveMode = true;
         Log.d("MainActivity", "Drive mode set to true");
@@ -1053,22 +1094,32 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         Log.d("Scheduler", "Next alarm set for " + lineType + " at " + calendar.getTime().toString());
     }
 
-    public void startTimebox() {
+    private void toastIfWorkingAndTryingToStartTimebox() {
+        Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
+        Log.w("Timebox", "Timebox already running, not starting a new one");
+    }
 
+    public void startPreparation() {
+        Log.d("MainActivity", "Starting preparation mode");
         if (isWorking()) {
-            Toast.makeText(this, "Timebox is already running.", Toast.LENGTH_SHORT).show();
-            Log.w("Timebox", "Timebox already running, not starting a new one");
+            toastIfWorkingAndTryingToStartTimebox();
+            return;
+        }
+        if (ToggleOption.PREPARATION.isModeEnabled(this)) {
+            setPreparationModeToTrue();
+            addTasksFromList("starting");
+        }
+        startTimebox();
+    }
+
+    public void startTimebox() {
+        if (isWorking()) {
+            toastIfWorkingAndTryingToStartTimebox();
             return;
         }
 
-
-        showMusicModeAppChooserDialog(this, new onMusicAppSelectedListener() {
-            @Override
-            public void onAppSelected(String packageName) {
-                StartlinesManager.saveBreakApp(getApplicationContext(), packageName);
-            }
-        });
-        StartlinesManager.setBreakSuggestionsSilenced(this, false);
+        StartlinesManager.setBreakSuggestionsSilenced(this, true);
+        TaskMode.resetTaskComplete();
         startTimebox(2);
     }
 
@@ -1096,9 +1147,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 getPotentialComplianceScore(currentTimeboxDuration),
                 !isFunModeOn());
 
-        if (!isTimeLimitSet() && !StartlinesManager.isNotConnectedToIndoorWifi(this)) {
+        if (!timeLimitSetManually && !StartlinesManager.isNotConnectedToIndoorWifi(this)) {
             // If there is no time limit set, play the ticking sound
-            playTickingSound();
+            if (!preparationMode) {
+                playTickingSound();
+            }
         }
 
         setTimeboxStatusText(currentTimeboxDuration + " (" + endTimeFormatted + ")");
@@ -1116,7 +1169,29 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         // Set Startlines to "1" after timebox completion and start the new timebox
 
         timeboxRunnable = () -> {
+            boolean breakTimebox = (currentTimeboxDuration % 2) != 0;
+            if (preparationMode) {
+                Log.d("Timebox", "Preparation mode ended");
+                setPreparationModeToFalse();
+                timeboxComplete();
+                startTimebox(2);
+                setTimeLimit(29);
+                return;
+            } else if (breakTimebox) {
+                Log.d("Timebox", "Break ended");
+                timeboxComplete();
+                timesStopButtonPressed = 0;
+                if (isTimeLimitPassed()) {
+                    startTimebox(2);
+                    setTimeLimit(29);
+                } else {
+                    startTimebox(currentTimeboxDuration + 5);
+                }
+                return;
+            }
+
             boolean twoMinuteTimeboxWentUnacknowledged = currentTimeboxDuration == 2 && !wasTimerNotificationAcknowledged();
+
             if (!twoMinuteTimeboxWentUnacknowledged && !isDriveModeOn()) {
                 timeboxComplete();
             } else {
@@ -1126,7 +1201,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
             if (isTimeLimitPassed()) {
                 Log.d("Timebox", "Time limit reached, stopping timebox");
-                stopTimebox();
+                if (ToggleOption.BREAK.isModeEnabled(this)) {
+                    startBreakTimebox();
+                } else {
+                    stopTimebox();
+                }
                 return;
             } else if (!isDriveModeOn() && !wasTimerNotificationAcknowledged()) {
                 Log.d("Timebox", "Timer notification not acknowledged, stopping timebox");
@@ -1134,6 +1213,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 return;
             } else if (!isDriveModeOn() && !StartlinesManager.isCalendarLikelyVisible(this)) {
                 Log.d("Timebox", "Calendar not likely visible, stopping timebox");
+                stopTimebox();
+                return;
+            }
+            else if (ToggleOption.TASK.isModeEnabled(this) && !isDriveModeOn() && !TaskMode.wasTaskCompleted()) {
+                Log.d("Timebox", "Task not completed during timebox. Stopping timebox.");
                 stopTimebox();
                 return;
             }
@@ -1159,15 +1243,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             deleteOldTimeboxes();
             NotificationHelper.cancelTimerNotification(this);
             clearTemporaryBlockList();
+            resetTimeLimitSetManually();
             timesStopButtonPressed = 0;
             recordTime("timeboxEnded");
             setDriveModeToFalse();
-            if (StartlinesManager.isMusicModeOn(this)) {
-                startTimerAndOpenBreakApp();
-            } else {
-                StartlinesManager.openEssayAppWithMessage(this,"Write for 2 minutes on the benefits of music mode");
-            }
             switchCalendarModeToOn();
+            TaskMode.resetTaskAdded();
             Log.d("Timebox", "Timebox stopped");
         } else {
             Toast.makeText(this, "Timebox is not running. Nothing to stop.", Toast.LENGTH_SHORT).show();
@@ -1253,6 +1334,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
             if (!inputText.isEmpty()) {
                 int minutes = Integer.parseInt(inputText);
                 setTimeLimit(minutes);
+                stopTickingSound();
+                setTimeLimitSetManually();
                 Log.d("Timebox", "Time limit set for " + minutes + " minutes");
             } else {
                 resetWorkingUntilTime();
@@ -1271,7 +1354,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         timeLimitInMillis = timestampMinutesFromNow(minutes);
         String endTimeText = timestampToText(timeLimitInMillis);
         setWorkingUntilText(endTimeText);
-        stopTickingSound();
     }
 
     private void setStartlineStatus(String i) {
@@ -1348,7 +1430,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
     }
 
     private void unmutePhoneIfTimeboxRunningAndNoTimeLimitIsSet() {
-        if (isWorking() && !isTimeLimitSet()) {
+        if (isWorking() && !timeLimitSetManually) {
             AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
             int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
             if (currentVolume == 0) {
@@ -1554,6 +1636,12 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         builder.show();
     }
 
+    private void addTasksFromList(String taskType) {
+        String[] taskArray = getTaskListFromPrefs(taskType).split("\\n");
+        addTasks(Arrays.asList(taskArray));
+
+    }
+
     private void showStopButtonAdviceDialogue() {
         // Create an AlertDialog for what you should do before the timebox ends
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1587,6 +1675,11 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         return prefs.getString("stopButtonAdvice", defaultAdvice);
     }
 
+    private String getTaskListFromPrefs(String taskType) {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        return prefs.getString(taskType + "Tasks", "");
+    }
+
     private void showEditAdviceDialog(Runnable onSaveCallback) {
         SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
         String currentAdvice = prefs.getString("stopButtonAdvice", "");
@@ -1610,6 +1703,37 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 .setPositiveButton("Save", (dialog, which) -> {
                     String updatedAdvice = input.getText().toString();
                     prefs.edit().putString("stopButtonAdvice", updatedAdvice).apply();
+                    if (onSaveCallback != null) {
+                        onSaveCallback.run();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void taskEditDialog(String taskType, Runnable onSaveCallback) {
+        SharedPreferences prefs = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+        String prefName = taskType + "Tasks";
+        String currentTaskList = prefs.getString(prefName, "");
+
+        final EditText input = new EditText(this);
+        input.setText(currentTaskList);
+        input.setHint("Enter each task on a new line");
+
+        input.setMinLines(6);
+        input.setMaxLines(15);
+        input.setSingleLine(false);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE |
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT);
+        input.setImeOptions(EditorInfo.IME_FLAG_NO_ENTER_ACTION);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit " + taskType + " tasks.")
+                .setView(input)
+                .setMessage("Each task will be added separately.\nSeparate each task by a new line.")
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String updatedAdvice = input.getText().toString();
+                    prefs.edit().putString(prefName, updatedAdvice).apply();
                     if (onSaveCallback != null) {
                         onSaveCallback.run();
                     }
@@ -1692,5 +1816,13 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
+    }
+
+    void setTimeLimitSetManually() {
+        timeLimitSetManually = true;
+    }
+
+    void resetTimeLimitSetManually() {
+        timeLimitSetManually = false;
     }
 }

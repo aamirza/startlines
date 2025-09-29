@@ -60,6 +60,24 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/manage_bookend_tasks"
+        android:title="Edit bookend tasks"
+        android:orderInCategory="60"
+        app:showAsAction="never" >
+        <menu>
+            <item
+                android:id="@+id/manage_start_tasks"
+                android:title="Manage start tasks"
+                android:orderInCategory="10" />
+
+            <item
+                android:id="@+id/manage_break_tasks"
+                android:title="Manage break tasks"
+                android:orderInCategory="20" />
+        </menu>
+    </item>
+
+    <item
         android:id="@+id/ip_port_settings"
         android:title="@string/ip_and_port_settings_menu_button"
         app:showAsAction="never"
@@ -78,8 +96,33 @@
         android:orderInCategory="130" />
 
     <item
-        android:id="@+id/toggle_auto_start"
-        android:title="Toggle Autostart"
-        app:showAsAction="never"
-        android:orderInCategory="140" />
+        android:title="Toggles"
+        android:orderInCategory="140"
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/toggle_auto_start"
+                android:title="Toggle Autostart"
+                app:showAsAction="never"
+                android:orderInCategory="10" />
+
+            <item
+                android:id="@+id/toggle_preparation_mode"
+                android:title="Toggle Preparation Mode"
+                app:showAsAction="never"
+                android:orderInCategory="20" />
+
+            <item
+                android:id="@+id/toggle_break_mode"
+                android:title="Toggle Break Mode"
+                app:showAsAction="never"
+                android:orderInCategory="30" />
+
+            <item
+                android:id="@+id/toggle_task_mode"
+                android:title="Toggle Task Mode"
+                app:showAsAction="never"
+                android:orderInCategory="40" />
+        </menu>
+    </item>
 </menu>
