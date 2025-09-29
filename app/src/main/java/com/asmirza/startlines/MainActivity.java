@@ -1216,7 +1216,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
                 stopTimebox();
                 return;
             }
-            else if (!isDriveModeOn() && !TaskMode.wasTaskCompleted()) {
+            else if (ToggleOption.TASK.isModeEnabled(this) && !isDriveModeOn() && !TaskMode.wasTaskCompleted()) {
                 Log.d("Timebox", "Task not completed during timebox. Stopping timebox.");
                 stopTimebox();
                 return;
